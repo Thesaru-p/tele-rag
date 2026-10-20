@@ -104,12 +104,12 @@ async function main(): Promise<void> {
   await getOrCreate(
     "DocumentsDB app",
     () => documents.get({ databaseId: resources.appDatabase }),
-    () => documents.create({ databaseId: resources.appDatabase, name: "app" }),
+    () => documents.create({ databaseId: resources.appDatabase, name: "app", specification: "serverless" }),
   );
   await getOrCreate(
     "VectorsDB vectors",
     () => vectors.get({ databaseId: resources.vectorDatabase }),
-    () => vectors.create({ databaseId: resources.vectorDatabase, name: "vectors" }),
+    () => vectors.create({ databaseId: resources.vectorDatabase, name: "vectors", specification: "serverless" }),
   );
 
   for (const { id, indexes } of collectionSpecs) {

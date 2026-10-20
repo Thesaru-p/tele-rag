@@ -7,7 +7,7 @@ are built in later milestones.
 ## Milestone 1: Appwrite resources
 
 Create an [Appwrite Cloud](https://cloud.appwrite.io/) project. Make a setup API
-key with `documentsdb.read`, `documentsdb.write`,
+key with `databases.read`, `databases.write`, `documentsdb.read`, `documentsdb.write`,
 `documentsdb.collections.read`, `documentsdb.collections.write`,
 `vectorsdb.read`, `vectorsdb.write`, `vectorsdb.collections.read`,
 `vectorsdb.collections.write`, `vectorsdb.indexes.read`,
