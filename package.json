@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node scripts/website.mjs",
+    "build": "node scripts/website.mjs --build",
+    "preview": "node scripts/website.mjs --preview",
     "setup:appwrite": "tsx scripts/setup-appwrite.ts",
     "typecheck": "tsc --noEmit"
   },

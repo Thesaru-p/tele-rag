@@ -4,6 +4,31 @@ Document-to-Telegram chatbot SaaS for small businesses. Milestone 1 contains the
 Appwrite resource setup and shared data model; ingestion, bots, and the dashboard
 are built in later milestones.
 
+## Website & offline product demo
+
+The `website/` directory contains a responsive product website and a scripted
+Telegram-style demo. It is self-contained: no external fonts, CDN assets, API
+keys, Supabase, Appwrite connection, or new dependencies are needed.
+
+```powershell
+npm run dev
+```
+
+Open http://localhost:3000. The demo supports questions about sample class prices,
+hours, beginner sessions, group sessions, materials, and cancellations. Click a
+source to inspect the corresponding sample document, or reset the conversation
+with the reset button. Unknown questions get an honest fallback. All sample
+content is fictional; this is not live AI or a connected Telegram bot.
+
+```powershell
+npm run build
+npm run preview
+```
+
+The build copies the site to `dist/`, suitable for static hosting. `preview`
+serves that build locally. Set `$env:PORT` to use a port other than 3000.
+The existing backend scripts are independent of the website.
+
 ## Milestone 1: Appwrite resources
 
 Create an [Appwrite Cloud](https://cloud.appwrite.io/) project. Make a setup API
