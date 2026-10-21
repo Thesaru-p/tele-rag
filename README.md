@@ -1,72 +1,49 @@
 # tele-rag
 
-Document-to-Telegram chatbot SaaS for small businesses. Milestone 1 contains the
-Appwrite resource setup and shared data model; ingestion, bots, and the dashboard
-are built in later milestones.
+TeleRAG turns a small business’s documents into grounded customer support answers. The current MVP includes Supabase sign-in, private document storage, text extraction, OpenRouter embeddings, vector retrieval, grounded chat answers, and a Telegram webhook integration.
 
-## Website & offline product demo
+## Run locally
 
-The `website/` directory contains a responsive product website and a scripted
-Telegram-style demo. It is self-contained: no external fonts, CDN assets, API
-keys, Supabase, Appwrite connection, or new dependencies are needed.
+Use Node.js 20 or later. Copy `.env.example` to `.env` and fill in your project keys:
+
+```env
+SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+SUPABASE_ANON_KEY=<ANON_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
+OPENROUTER_API_KEY=<OPENROUTER_API_KEY>
+OPENROUTER_CHAT_MODEL=minimax/minimax-m3.1-flash:free
+OPENROUTER_EMBEDDING_MODEL=thenlper/gte-base
+TELEGRAM_WEBHOOK_BASE_URL=https://<YOUR_PUBLIC_APP_DOMAIN>
+```
+
+Keep the service role and OpenRouter keys server-side. `.env` is ignored by Git. In Supabase Authentication settings, enable email/password sign-in. For a quick local trial, email confirmation can be disabled; otherwise confirm the signup link before signing in.
 
 ```powershell
+npm install
+npm run setup:supabase
 npm run dev
 ```
 
-Open http://localhost:3000. The demo supports questions about sample class prices,
-hours, beginner sessions, group sessions, materials, and cancellations. Click a
-source to inspect the corresponding sample document, or reset the conversation
-with the reset button. Unknown questions get an honest fallback. All sample
-content is fictional; this is not live AI or a connected Telegram bot.
+Open http://localhost:3000/workspace, create an account, upload a PDF, DOCX, CSV, TXT, or Markdown file (up to 10 MiB), and ask a question about it. Files upload directly from the browser to the private Supabase Storage bucket using a short-lived signed upload URL; the application server only receives upload metadata and performs indexing after the upload finishes. The root page remains a scripted product demo. The setup script creates the private `documents` Storage bucket; run `supabase/migrations/0001_initial.sql` once in the Supabase SQL Editor to create the tables, RLS rules, pgvector index, and match function.
+
+OpenRouter chat uses the free MiniMax M3.1 Flash endpoint. Embeddings use `thenlper/gte-base` at $0.005 per million input tokens, producing 768 dimensions to match `vector(768)`. Its 512-token input limit is why indexing uses short overlapping chunks. Keep the same embedding model for indexing and query embeddings. Changing it later requires re-embedding stored chunks. Free chat endpoints have provider availability and request limits.
+
+To enable Telegram, deploy the app at a public HTTPS URL and set `TELEGRAM_WEBHOOK_BASE_URL` to that origin. Apply `supabase/migrations/0002_telegram_bots.sql` in the Supabase SQL editor, restart the server, then connect a bot token in the signed-in workspace. Create the token with Telegram's BotFather. Bot tokens are encrypted server-side using a key derived from the Supabase service-role key; never expose that service-role key to the browser. Telegram webhooks cannot reach a localhost-only dev server.
+
+## Build the static preview
 
 ```powershell
 npm run build
 npm run preview
 ```
 
-The build copies the site to `dist/`, suitable for static hosting. `preview`
-serves that build locally. Set `$env:PORT` to use a port other than 3000.
-The existing backend scripts are independent of the website.
+The current authenticated workspace requires the Node server and server-side environment variables; static hosting of `dist/` only serves the marketing/demo pages and does not provide the API routes.
 
-## Milestone 1: Appwrite resources
+## Current scope
 
-Create an [Appwrite Cloud](https://cloud.appwrite.io/) project. Make a setup API
-key with `databases.read`, `databases.write`, `documentsdb.read`, `documentsdb.write`,
-`documentsdb.collections.read`, `documentsdb.collections.write`,
-`vectorsdb.read`, `vectorsdb.write`, `vectorsdb.collections.read`,
-`vectorsdb.collections.write`, `vectorsdb.indexes.read`,
-`vectorsdb.indexes.write`, `buckets.read`, and `buckets.write` scopes. Keep this
-key server-side and remove or rotate it after setup.
-
-Use Node.js 20 or later. In PowerShell, from the repository root:
-
-```powershell
-npm ci
-npm run typecheck
-npm run setup:appwrite -- --dry-run
-$env:APPWRITE_ENDPOINT = "https://<REGION>.cloud.appwrite.io/v1"
-$env:APPWRITE_PROJECT_ID = "<PROJECT_ID>"
-$env:APPWRITE_API_KEY = "<SETUP_KEY>"
-npm run setup:appwrite
-```
-
-The setup command is safe to rerun. It creates a DocumentsDB database `app`
-with six private collections, a VectorsDB database `vectors` with a private
-768-dimensional `chunks` collection and HNSW cosine index, and an encrypted
-`documents` Storage bucket. The bucket allows signed-in users to create files,
-but grants no bucket-wide read permission. Future uploads must set file-level
-permissions for their owner.
-
-The bucket accepts PDF, DOCX, XLSX, CSV, TXT, Markdown, PNG, JPEG, and WebP up
-to 10 MiB. The database records and vector metadata are defined in
-`packages/core/src/model.ts`. DocumentsDB is schemaless; these TypeScript
-interfaces are the application contract. Business secrets, usage counters,
-conversation records, and vectors are only accessed through server functions.
-
-To verify in the Appwrite Console, inspect both database types, each collection's
-permissions and indexes, and the Storage bucket's file security, encryption,
-extension list, and create-only bucket permission. Wait until indexes show
-`available` before ingesting documents. No Appwrite resources are created by the
-dry run.
-
+- One business workspace per authenticated account
+- Private uploads for PDF, DOCX, CSV, TXT, and Markdown
+- Text extraction, overlapping chunking, and 768-dimensional OpenRouter embeddings
+- Tenant-filtered vector retrieval and source-labelled answers
+- Unanswered questions stored for later review
+- Spreadsheet extraction, OCR for scanned/image files, usage billing, and admin dashboard are not implemented yet

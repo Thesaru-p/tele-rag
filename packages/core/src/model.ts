@@ -15,13 +15,13 @@ export const resources = {
 } as const;
 
 export const defaults = {
-  embeddingModel: "nomic-embed-text",
+  embeddingModel: "thenlper/gte-base",
   embeddingDimension: 768,
   monthlyMessageLimit: 1000,
   chatMessagesPerMinute: 5,
   maximumUploadBytes: 10 * 1024 * 1024,
   allowedExtensions: [
-    "pdf", "docx", "xlsx", "csv", "txt", "md", "png", "jpg", "jpeg", "webp",
+    "pdf", "docx", "csv", "txt", "md",
   ],
 } as const;
 

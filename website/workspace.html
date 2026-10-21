@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f2">
+  <meta name="description" content="Upload business documents and ask grounded questions with TeleRAG.">
+  <title>Workspace · TeleRAG</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/workspace.css">
+  <script src="/workspace.js" defer></script>
+</head>
+<body class="workspace-body">
+  <header class="site-header workspace-header">
+    <a class="brand" href="/" aria-label="TeleRAG home"><span class="brand-mark">✳</span>tele<span class="brand-rag">rag</span><span class="brand-dot">.</span></a>
+    <a class="text-link" href="/">Back to the site ↗</a>
+  </header>
+  <main class="workspace-main">
+    <section id="auth-panel" class="auth-panel">
+      <span class="eyebrow">YOUR KNOWLEDGE WORKSPACE</span>
+      <h1>Let’s get your<br><em>knowledge together.</em></h1>
+      <p>Sign in to upload documents and try grounded answers.</p>
+      <form id="auth-form" class="workspace-form">
+        <label>Email<input id="email" type="email" autocomplete="email" required></label>
+        <label>Password<input id="password" type="password" minlength="8" autocomplete="current-password" required></label>
+        <button class="button primary" id="auth-submit" type="submit">Sign in <span>↗</span></button>
+      </form>
+      <button id="toggle-auth" class="plain-button" type="button">Create an account</button>
+      <p id="auth-message" class="status-message" role="status"></p>
+    </section>
+
+    <section id="workspace-panel" class="workspace-panel" hidden>
+      <div class="workspace-title-row"><div><span class="eyebrow">YOUR BUSINESS KNOWLEDGE, IN ONE PLACE</span><h1 id="business-name">Your workspace</h1><p>Start with your documents. Then try an answer or connect Telegram.</p></div><button id="sign-out" class="plain-button" type="button">Sign out</button></div>
+      <div class="workspace-grid">
+        <section class="workspace-card document-card">
+          <span class="card-step">STEP 1</span>
+          <h2>Your documents</h2>
+          <p>Add the information you want your assistant to know. PDF, DOCX, CSV, TXT, or Markdown, up to 10 MiB.</p>
+          <form id="upload-form" class="upload-form"><label class="file-picker"><span class="file-picker-copy"><strong>Choose a document</strong><small>Browse your device · max 10 MiB</small></span><input id="file-input" type="file" accept=".pdf,.docx,.csv,.txt,.md" required></label><button class="button primary" type="submit">Upload & index <span>↗</span></button></form>
+          <p id="upload-message" class="status-message" role="status"></p>
+          <ul id="document-list" class="document-list-live"></ul>
+        </section>
+        <section class="workspace-card chat-card-live">
+          <span class="card-step">STEP 2</span>
+          <h2>Ask your documents</h2>
+          <p>Try a question. TeleRAG finds relevant passages before answering.</p>
+          <div id="answer-box" class="answer-box" role="status">Your answer will appear here, along with its source document.</div>
+          <form id="question-form" class="question-form"><label class="sr-only" for="question-input">Ask a question</label><input id="question-input" maxlength="1000" placeholder="Ask something about your documents…" required><button class="button primary" type="submit">Ask <span>↗</span></button></form>
+          <ul id="source-list" class="source-list"></ul>
+        </section>
+        <section class="workspace-card telegram-card">
+          <span class="card-step">STEP 3 · OPTIONAL</span>
+          <h2>Bring your assistant to Telegram</h2>
+          <p>Connect a Telegram bot so customers can get answers from the documents you’ve uploaded.</p>
+          <p id="telegram-status" class="status-message" role="status">Checking connection…</p>
+          <form id="telegram-form" class="workspace-form telegram-form">
+            <label for="telegram-token">Bot token<input id="telegram-token" type="password" autocomplete="off" placeholder="Paste the token from BotFather" required></label>
+            <button id="telegram-connect" class="button primary" type="submit">Connect bot <span>↗</span></button>
+          </form>
+          <button id="telegram-disconnect" class="plain-button" type="button" hidden>Disconnect bot</button>
+          <details class="telegram-guide">
+            <summary>Need to create a bot? Follow these steps</summary>
+            <ol class="telegram-steps">
+              <li><a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">Open BotFather on Telegram ↗</a>.</li>
+              <li>Send <code>/newbot</code>, then choose a display name and a username ending in <code>bot</code>.</li>
+              <li>Copy the token BotFather gives you, return here, and paste it above.</li>
+            </ol>
+            <p class="telegram-note">Keep the token private. Anyone who has it can control your bot. If it leaks, revoke it with BotFather and connect the replacement.</p>
+          </details>
+        </section>
+      </div>
+      <p class="workspace-footnote">Documents stay in your private Supabase project. OpenRouter processes extracted text for indexing and answers.</p>
+    </section>
+  </main>
+</body>
+</html>

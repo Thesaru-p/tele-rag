@@ -1,0 +1,78 @@
+:root { --workspace-ink:#1e3329; --workspace-muted:#68766c; --workspace-green:#1d5943; --workspace-line:#e3e9e2; --workspace-soft:#f4f7f2; }
+.workspace-body { min-height:100vh; background:#f5f7f3; color:var(--workspace-ink); }
+.workspace-header { position:static; width:min(1160px,calc(100% - 48px)); margin:0 auto; border-bottom:1px solid #e6ebe4; }
+.workspace-header .brand-mark { display:grid; place-items:center; font-size:17px; }
+.workspace-main { width:min(1080px,calc(100% - 48px)); margin:48px auto 88px; }
+.auth-panel { max-width:480px; margin:8vh auto; padding:42px; background:white; border:1px solid var(--workspace-line); border-radius:22px; box-shadow:0 20px 60px #1c34220a; }
+.auth-panel h1,.workspace-title-row h1 { margin:14px 0 10px; font-size:clamp(36px,5vw,52px); line-height:1.05; letter-spacing:-.045em; }
+.auth-panel h1 em,.workspace-title-row h1 em { font-family:Georgia,serif; font-weight:400; }
+.auth-panel>p,.workspace-title-row p,.workspace-card>p { color:var(--workspace-muted); line-height:1.6; }
+.workspace-form { display:grid; gap:14px; margin-top:24px; }
+.workspace-form label { display:grid; gap:7px; font-size:13px; font-weight:650; color:#3c4d42; }
+.workspace-form input,.question-form input { width:100%; min-width:0; padding:13px 14px; border:1px solid #d8e1d8; border-radius:10px; background:#fff; color:#253329; font:inherit; outline:none; transition:border-color .15s,box-shadow .15s; }
+.workspace-form input:focus,.question-form input:focus { border-color:#6e9a7d; box-shadow:0 0 0 3px #779b831a; }
+.workspace-form .button { justify-content:center; margin-top:4px; }
+.plain-button { padding:9px 0; color:#37624b; border:0; background:transparent; cursor:pointer; font:inherit; font-size:14px; }
+.status-message { min-height:20px; margin:10px 0 0; color:#43644d; font-size:13px; line-height:1.5; }
+.status-message.error { color:#a03a32; }
+.workspace-panel[hidden],.auth-panel[hidden] { display:none; }
+.workspace-title-row { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:0 0 28px; padding:10px 0 24px; border-bottom:1px solid var(--workspace-line); }
+.workspace-title-row h1 { margin:10px 0 8px; }
+.workspace-title-row p { margin:0; }
+.workspace-title-row>.plain-button { align-self:flex-start; }
+.workspace-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; align-items:stretch; }
+.workspace-card { min-width:0; padding:25px; background:#fff; border:1px solid var(--workspace-line); border-radius:16px; box-shadow:0 5px 18px #1c342207; }
+.workspace-card h2 { margin:8px 0 7px; font-size:21px; line-height:1.25; letter-spacing:-.025em; }
+.workspace-card>p { margin:0 0 15px; font-size:13px; }
+.card-step { display:inline-flex; color:#53745c; font-size:10px; font-weight:750; letter-spacing:.11em; }
+.document-card,.chat-card-live { min-height:320px; }
+.upload-form { display:grid; gap:12px; margin-top:20px; }
+.file-picker { position:relative; display:flex; min-height:84px; align-items:center; padding:14px 16px; border:1px dashed #bdcbbd; border-radius:12px; background:#fafcf9; color:#32483a; cursor:pointer; transition:background .15s,border-color .15s; }
+.file-picker:hover { border-color:#6e9679; background:#f4f8f3; }
+.file-picker input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.file-picker-copy { display:grid; gap:4px; }
+.file-picker-copy strong { font-size:14px; }
+.file-picker-copy small { color:#78847a; font-size:12px; }
+.upload-form .button,.question-form .button { min-height:44px; padding:0 16px; }
+.document-list-live,.source-list { display:grid; gap:8px; padding:0; margin:14px 0 0; list-style:none; }
+.document-item { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px 12px; padding:12px 13px; border:1px solid #edf0eb; border-radius:10px; background:#fbfcfa; color:#344238; font-size:13px; }
+.document-item>span { min-width:0; overflow-wrap:anywhere; }
+.document-item>small { grid-column:2; grid-row:1; align-self:center; }
+.document-item small { color:#738073; white-space:nowrap; }
+.reindex-button { grid-column:1/-1; justify-self:start; padding:3px 0; border:0; background:transparent; color:#37624b; cursor:pointer; font:inherit; font-size:12px; text-decoration:underline; }
+.answer-box { display:flex; min-height:136px; align-items:flex-start; margin-top:18px; padding:16px; border:1px solid #e6eae2; border-radius:11px; background:#f8faf7; color:#354238; line-height:1.65; white-space:pre-wrap; }
+.question-form { display:flex; gap:9px; margin-top:12px; }
+.source-item { color:#557660; font-size:12px; }
+.telegram-card { grid-column:1/-1; padding:23px 25px; }
+.telegram-card h2 { margin-top:7px; }
+.telegram-form { display:flex; align-items:end; gap:11px; max-width:760px; margin-top:14px; }
+.telegram-form label { flex:1; }
+.telegram-form input { display:block; margin-top:1px; }
+.telegram-form button { min-height:46px; white-space:nowrap; }
+.telegram-guide { margin-top:16px; padding-top:13px; border-top:1px solid #edf0eb; color:#56645a; font-size:13px; }
+.telegram-guide summary { width:fit-content; color:#315f44; cursor:pointer; font-weight:650; }
+.telegram-steps { display:grid; gap:7px; padding-left:20px; line-height:1.55; }
+.telegram-steps a { color:#315f44; font-weight:650; }
+.telegram-steps code { padding:2px 5px; border-radius:5px; background:#f1f4ee; }
+.telegram-note { max-width:760px; font-size:12px!important; }
+.workspace-footnote { margin-top:18px; color:#788178; font-size:12px; }
+@media (max-width:760px) {
+  .workspace-header { width:calc(100% - 32px); }
+  .workspace-main { width:calc(100% - 32px); margin:30px auto 56px; }
+  .auth-panel { padding:32px 24px; }
+  .workspace-grid { grid-template-columns:1fr; gap:13px; }
+  .workspace-title-row { align-items:flex-start; margin-bottom:20px; }
+  .workspace-title-row h1 { font-size:38px; }
+  .workspace-card,.telegram-card { padding:20px; }
+  .document-card,.chat-card-live { min-height:0; }
+  .telegram-card { grid-column:auto; }
+}
+@media (max-width:480px) {
+  .workspace-header { min-height:60px; }
+  .workspace-title-row { gap:10px; }
+  .workspace-title-row>.plain-button { padding-top:7px; }
+  .workspace-title-row h1 { font-size:34px; }
+  .question-form { flex-direction:column; }
+  .question-form .button { width:100%; justify-content:center; }
+  .telegram-form { align-items:stretch; flex-direction:column; }
+}
