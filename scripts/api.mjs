@@ -55,6 +55,17 @@ async function json(res, status, value) {
 }
 
 async function bodyJson(req) {
+  if (req.body !== undefined && req.body !== null) {
+    if (Buffer.isBuffer(req.body)) {
+      try { return JSON.parse(req.body.toString('utf8')); }
+      catch { throw Object.assign(new Error('Request body must be valid JSON.'), { status: 400 }); }
+    }
+    if (typeof req.body === 'string') {
+      try { return JSON.parse(req.body); }
+      catch { throw Object.assign(new Error('Request body must be valid JSON.'), { status: 400 }); }
+    }
+    if (typeof req.body === 'object') return req.body;
+  }
   const parts = [];
   for await (const part of req) parts.push(part);
   try { return JSON.parse(Buffer.concat(parts).toString('utf8')); }

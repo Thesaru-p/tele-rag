@@ -37,7 +37,7 @@ npm run build
 npm run preview
 ```
 
-The current authenticated workspace requires the Node server and server-side environment variables; static hosting of `dist/` only serves the marketing/demo pages and does not provide the API routes.
+The local authenticated workspace uses the Node server. Vercel uses the catch-all Node function in `api/[...path].mjs` for the API and serves the static site from `dist/`; `vercel.json` configures both. Upload bytes go directly from the browser to Supabase Storage, so they do not pass through a function request body. Configure the Supabase and OpenRouter environment variables in Vercel Project Settings. After the first deployment, set `TELEGRAM_WEBHOOK_BASE_URL` to the deployment's public HTTPS origin and redeploy before connecting a Telegram bot.
 
 ## Current scope
 
