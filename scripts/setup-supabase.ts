@@ -1,5 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
+import { readFileSync } from "node:fs";
 import { defaults } from "../packages/core/src/model.js";
+
+function loadEnv(): void {
+  try {
+    for (const line of readFileSync(".env", "utf8").split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!match || match[1] in process.env) continue;
+      const value = match[2].replace(/^(['"])(.*)\1$/, "$2");
+      process.env[match[1]] = value;
+    }
+  } catch {
+    // Environment variables may be supplied by the shell or CI instead.
+  }
+}
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -8,6 +22,7 @@ function required(name: string): string {
 }
 
 async function main(): Promise<void> {
+  loadEnv();
   const supabase = createClient(required("SUPABASE_URL"), required("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { autoRefreshToken: false, persistSession: false },
   });
