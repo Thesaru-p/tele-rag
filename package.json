@@ -7,11 +7,11 @@
     "dev": "node scripts/website.mjs",
     "build": "node scripts/website.mjs --build",
     "preview": "node scripts/website.mjs --preview",
-    "setup:appwrite": "tsx scripts/setup-appwrite.ts",
+    "setup:supabase": "tsx scripts/setup-supabase.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "node-appwrite": "30.0.1"
+    "@supabase/supabase-js": "2.76.1"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",
