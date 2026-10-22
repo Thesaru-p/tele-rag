@@ -2,7 +2,6 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID }
 import { basename, extname } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { unzipSync } from 'fflate';
-import { PDFParse } from 'pdf-parse';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(['pdf', 'docx', 'csv', 'txt', 'md']);
@@ -96,6 +95,7 @@ async function getBusiness(user, requestedName = 'My business') {
 
 async function extractText(file, extension) {
   if (extension === 'pdf') {
+    const { PDFParse } = await import('pdf-parse');
     const parser = new PDFParse({ data: file.buffer });
     try { return (await parser.getText()).text; }
     finally { await parser.destroy(); }
