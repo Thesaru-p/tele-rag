@@ -145,7 +145,7 @@ async function embed(text) {
 }
 
 async function generateAnswer(question, matches) {
-  const model = process.env.OPENROUTER_CHAT_MODEL?.trim() || 'minimax/minimax-m3.1-flash:free';
+  const model = process.env.OPENROUTER_CHAT_MODEL?.trim() || 'qwen/qwen3.8-27b';
   const context = matches.map((match, index) => `[Source ${index + 1}: ${match.file_name}]\n${match.content}`).join('\n\n');
   const response = await fetch(`${OPENROUTER_URL}/chat/completions`, {
     method: 'POST', headers: { Authorization: `Bearer ${env('OPENROUTER_API_KEY')}`, 'Content-Type': 'application/json', 'X-Title': 'TeleRAG' },
