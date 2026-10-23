@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID }
 import { basename, extname } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { unzipSync } from 'fflate';
+import { buildWelcomeMessage } from '../website/welcome-message.js';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(['pdf', 'docx', 'csv', 'txt', 'md']);
@@ -327,14 +328,16 @@ async function answerForBusiness(db, businessId, question, chatId) {
 async function handleTelegramWebhook(req, res, hookSecret) {
   if (req.headers['x-telegram-bot-api-secret-token'] !== hookSecret) return json(res, 403, { error: 'Invalid webhook secret.' });
   const db = admin();
-  const found = await db.from('telegram_bots').select('business_id, encrypted_token').eq('webhook_secret', hookSecret).eq('enabled', true).maybeSingle();
+  const found = await db.from('telegram_bots').select('business_id, encrypted_token, bot_username').eq('webhook_secret', hookSecret).eq('enabled', true).maybeSingle();
   if (found.error) throw found.error;
   if (!found.data) return json(res, 404, { error: 'Bot not found.' });
   const update = await bodyJson(req);
   const message = update.message;
   const text = typeof message?.text === 'string' ? message.text.trim() : '';
   const chatId = message?.chat?.id;
-  if (!text || !chatId || text.startsWith('/')) return json(res, 200, { ok: true });
+  const startCommand = text.match(/^\/start(?:@([A-Za-z0-9_]+))?(?:\s|$)/i);
+  const isStart = Boolean(startCommand && (!startCommand[1] || startCommand[1].toLowerCase() === found.data.bot_username?.toLowerCase()));
+  if (!text || !chatId || (text.startsWith('/') && !isStart)) return json(res, 200, { ok: true });
   let updateKey;
   if (update.update_id !== undefined) {
     updateKey = `telegram:${update.update_id}`;
@@ -343,9 +346,19 @@ async function handleTelegramWebhook(req, res, hookSecret) {
     if (claimed.error) throw claimed.error;
   }
   try {
-    const result = await answerForBusiness(db, found.data.business_id, text.slice(0, 1000), `telegram:${chatId}`);
+    let answer;
+    if (isStart) {
+      const business = await db.from('businesses').select('name').eq('id', found.data.business_id).single();
+      if (business.error) throw business.error;
+      const docs = await db.from('documents').select('file_name, status').eq('business_id', found.data.business_id);
+      if (docs.error) throw docs.error;
+      answer = buildWelcomeMessage({ businessName: business.data.name, botUsername: found.data.bot_username, documents: docs.data || [] });
+    } else {
+      const result = await answerForBusiness(db, found.data.business_id, text.slice(0, 1000), `telegram:${chatId}`);
+      answer = result.answer;
+    }
     const token = decryptSecret(found.data.encrypted_token);
-    await telegramRequest(token, 'sendMessage', { chat_id: chatId, text: result.answer.slice(0, 4096) });
+    await telegramRequest(token, 'sendMessage', { chat_id: chatId, text: answer.slice(0, 4096) });
   } catch (error) {
     if (updateKey) await db.from('processed_updates').delete().eq('business_id', found.data.business_id).eq('update_id', updateKey);
     throw error;

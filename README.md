@@ -30,6 +30,8 @@ OpenRouter chat uses the free MiniMax M3.1 Flash endpoint. Embeddings use `thenl
 
 To enable Telegram, deploy the app at a public HTTPS URL and set `TELEGRAM_WEBHOOK_BASE_URL` to that origin. Apply `supabase/migrations/0002_telegram_bots.sql` in the Supabase SQL editor, restart the server, then connect a bot token in the signed-in workspace. Create the token with Telegram's BotFather. Bot tokens are encrypted server-side using a key derived from the Supabase service-role key; never expose that service-role key to the browser. Telegram webhooks cannot reach a localhost-only dev server.
 
+Once every uploaded document is indexed and a bot is connected, the Telegram section shows a short welcome paragraph with a copy button. It uses your business name (or bot username) and up to three document titles. The bot sends the same generated greeting in response to `/start`, including Telegram Start buttons and deep links, without an AI request. You can also paste the paragraph into BotFather’s `/setdescription` to display it before someone starts the chat. The copy button offers manual selection if clipboard access is unavailable. Run `node --test scripts/telegram-welcome.test.mjs` to check readiness, message generation, and the webhook’s welcome/retry behavior with mocked services.
+
 ## Build the static preview
 
 ```powershell

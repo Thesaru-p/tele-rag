@@ -1,3 +1,5 @@
+import { buildWelcomeMessage, welcomeMessageReady } from './welcome-message.js';
+
 const authPanel = document.querySelector('#auth-panel');
 const workspacePanel = document.querySelector('#workspace-panel');
 const authForm = document.querySelector('#auth-form');
@@ -7,6 +9,43 @@ const authSubmit = document.querySelector('#auth-submit');
 const sessionKey = 'telerag-session';
 let config;
 let creatingAccount = false;
+let workspaceBusiness = null;
+let workspaceDocuments = [];
+let telegramConnection = null;
+let documentsChanging = false;
+
+function updateWelcomeMessage() {
+  const panel = document.querySelector('#welcome-panel');
+  const message = document.querySelector('#welcome-message');
+  panel.hidden = documentsChanging || !workspaceBusiness || !welcomeMessageReady(telegramConnection?.connected, workspaceDocuments);
+  const text = panel.hidden ? '' : buildWelcomeMessage({
+    businessName: workspaceBusiness.name,
+    botUsername: telegramConnection.username,
+    documents: workspaceDocuments,
+  });
+  if (message.value !== text) {
+    message.value = text;
+    status(document.querySelector('#welcome-copy-status'), '');
+  }
+}
+
+document.querySelector('#copy-welcome').addEventListener('click', async event => {
+  const message = document.querySelector('#welcome-message');
+  const feedback = document.querySelector('#welcome-copy-status');
+  if (!message.value) return;
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    await navigator.clipboard.writeText(message.value);
+    status(feedback, 'Copied. Your welcome message is ready to paste.');
+  } catch {
+    message.focus();
+    message.select();
+    status(feedback, 'Select the paragraph and copy it, or press Ctrl+C (⌘C on Mac).');
+  } finally {
+    button.disabled = false;
+  }
+});
 
 function status(element, message, isError = false) {
   element.textContent = message;
@@ -45,6 +84,10 @@ async function api(path, options = {}) {
 }
 
 function showLogin() {
+  workspaceBusiness = null;
+  workspaceDocuments = [];
+  telegramConnection = null;
+  updateWelcomeMessage();
   authPanel.hidden = false;
   workspacePanel.hidden = true;
 }
@@ -57,7 +100,9 @@ function showWorkspace() {
 
 toggleAuth.addEventListener('click', () => {
   creatingAccount = !creatingAccount;
-  authSubmit.innerHTML = creatingAccount ? 'Create account <span>↗</span>' : 'Sign in <span>↗</span>';
+  authSubmit.innerHTML = creatingAccount ? 'Create your workspace <span>↗</span>' : 'Sign in to your workspace <span>↗</span>';
+  document.querySelector('#auth-title').textContent = creatingAccount ? 'Make yourself at home.' : 'Welcome back.';
+  document.querySelector('#auth-description').textContent = creatingAccount ? 'Create an account to bring your knowledge together.' : 'Sign in and pick up where you left off.';
   toggleAuth.textContent = creatingAccount ? 'I already have an account' : 'Create an account';
   document.querySelector('#password').autocomplete = creatingAccount ? 'new-password' : 'current-password';
   status(authMessage, '');
@@ -86,10 +131,15 @@ authForm.addEventListener('submit', async event => {
 });
 
 async function loadWorkspace() {
+  workspaceDocuments = [];
+  updateWelcomeMessage();
   const business = await api('/api/business');
+  workspaceBusiness = business;
   document.querySelector('#business-name').textContent = business.name;
   await loadTelegramStatus();
   const docs = await api('/api/documents');
+  workspaceDocuments = docs;
+  updateWelcomeMessage();
   const list = document.querySelector('#document-list');
   list.replaceChildren();
   for (const doc of docs) {
@@ -107,6 +157,8 @@ async function loadWorkspace() {
       retry.textContent = 'Retry indexing';
       retry.addEventListener('click', async () => {
         retry.disabled = true;
+        documentsChanging = true;
+        updateWelcomeMessage();
         status(document.querySelector('#upload-message'), `Retrying indexing for ${doc.file_name}…`);
         try {
           const result = await api(`/api/documents/${encodeURIComponent(doc.id)}/reindex`, { method: 'POST' });
@@ -115,6 +167,9 @@ async function loadWorkspace() {
         } catch (error) {
           status(document.querySelector('#upload-message'), error.message, true);
           retry.disabled = false;
+        } finally {
+          documentsChanging = false;
+          updateWelcomeMessage();
         }
       });
       item.append(retry);
@@ -135,10 +190,14 @@ async function loadTelegramStatus() {
   const form = document.querySelector('#telegram-form');
   try {
     const state = await api('/api/telegram');
+    telegramConnection = state;
+    updateWelcomeMessage();
     status(label, state.connected ? `Connected as @${state.username}.` : 'No Telegram bot connected.');
     disconnect.hidden = !state.connected;
     form.hidden = state.connected;
   } catch (error) {
+    telegramConnection = null;
+    updateWelcomeMessage();
     status(label, error.message, true);
   }
 }
@@ -183,6 +242,8 @@ document.querySelector('#upload-form').addEventListener('submit', async event =>
   if (file.size > 10 * 1024 * 1024) return status(message, 'Choose a file no larger than 10 MiB.', true);
   const form = event.currentTarget;
   form.querySelector('button').disabled = true;
+  documentsChanging = true;
+  updateWelcomeMessage();
   status(message, 'Preparing a secure direct upload…');
   try {
     const upload = await api('/api/documents/upload-url', {
@@ -202,10 +263,12 @@ document.querySelector('#upload-form').addEventListener('submit', async event =>
     });
     status(message, `Indexed ${data.chunks} text chunks from ${data.name}.`);
     input.value = '';
-    await loadWorkspace();
   } catch (error) {
     status(message, error.message, true);
   } finally {
+    await loadWorkspace().catch(() => { workspaceDocuments = []; });
+    documentsChanging = false;
+    updateWelcomeMessage();
     form.querySelector('button').disabled = false;
   }
 });
