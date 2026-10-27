@@ -1,0 +1,43 @@
+Use case: infographic-diagram.
+Asset type: high-resolution square companion infographic for a LinkedIn carousel about the real TeleRAG project.
+Primary request: clearly show the business-owner and customer workflow from uploaded documents to Telegram answers and knowledge-base improvement. Create ONE finished square image, ideally 1600 x 1600 pixels or higher. Keep all text large, crisp, and easy to scan on a phone.
+
+Visual style: match the TeleRAG project's visual language: off-white #f8f9fb background, white rounded cards, dark ink #20252e, royal blue #3565ed accents, pale blue panels, subtle shadows. Modern sans-serif typography like Manrope and DM Sans. Restrained small dimensional illustrations: a folder of business documents, a knowledge-base database, a simple Telegram-style paper-plane/chat interface, and a review clipboard. Prioritize readability over decoration. No portraits or generic robot mascot.
+
+Composition: a clear top-to-bottom sequence of FIVE roomy numbered horizontal steps, with a narrow vertical royal-blue connecting line down the left side. Each step has a large number, a simple icon, a bold heading and ONE brief supporting line. Use a small role tag to distinguish owner actions from customer actions. At the bottom, one curved feedback arrow returns from step five to step two, visually expressing an update-and-reindex loop. Keep connectors separate from text. Do not use a complex tangled flowchart.
+
+Use this exact copy:
+Brand: "TeleRAG"
+Main title: "From documents to customer answers"
+Subtitle: "A simple workflow for a business and its customers"
+
+Step 01 role tag "BUSINESS OWNER"
+Heading "Create your workspace"
+Supporting line "Sign in and add your business name."
+
+Step 02 role tag "BUSINESS OWNER"
+Heading "Upload & index documents"
+Supporting line "PDF, DOCX, CSV, TXT or Markdown."
+
+Step 03 role tag "BUSINESS OWNER"
+Heading "Connect your Telegram bot"
+Supporting line "Add a BotFather token to your workspace."
+
+Step 04 role tag "CUSTOMER"
+Heading "Ask a question"
+Supporting line "Retrieve relevant passages, then reply with sources."
+
+Step 05 role tag "BUSINESS OWNER"
+Heading "Review & improve"
+Supporting line "Review conversations and unanswered questions."
+
+Label the feedback arrow from step five back to step two: "Update documents & reindex"
+
+A concise bottom callout with a small chat icon:
+"If the documents cannot support an answer, the question is saved for review."
+
+Small footer:
+"Private documents. Business-scoped retrieval. Source-backed replies."
+
+Accuracy constraints: Telegram is an optional channel; place a small readable pill near step three saying "Web chat also available". This is document retrieval plus generation, not model training. Do not imply OCR, Excel workbook support, automatic learning from conversations, payment billing, live deployment, or guaranteed accuracy. The improvement loop is the owner updating documents and indexing them, not the model retraining itself.
+Text constraints: render the specified copy faithfully, no extra paragraphs, no fake statistics, no fake customer names, no QR code, no watermark. Use generous margins and balanced spacing.

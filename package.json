@@ -1,6 +1,6 @@
 {
   "name": "tele-rag",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,14 @@
     "build": "node scripts/website.mjs --build",
     "preview": "node scripts/website.mjs --preview",
     "setup:supabase": "tsx scripts/setup-supabase.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test scripts/*.test.mjs",
+    "check": "npm run typecheck && npm test && npm run build",
+    "doctor": "node scripts/doctor.mjs",
+    "smoke:providers": "node scripts/provider-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
@@ -17,6 +24,8 @@
     "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.12",
+    "@electric-sql/pglite-pgvector": "^0.0.13",
     "@types/node": "^20.19.0",
     "tsx": "4.23.15",
     "typescript": "^5.9.0"

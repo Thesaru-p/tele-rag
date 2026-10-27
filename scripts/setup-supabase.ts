@@ -26,18 +26,22 @@ async function main(): Promise<void> {
   const supabase = createClient(required("SUPABASE_URL"), required("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { error } = await supabase.storage.createBucket("documents", {
+  const options = {
     public: false,
     fileSizeLimit: `${defaults.maximumUploadBytes}B`,
     allowedMimeTypes: [
       "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "text/plain",
-      "text/markdown", "image/png", "image/jpeg", "image/webp",
+      "text/csv", "text/plain", "text/markdown",
     ],
-  });
+  };
+  const { error } = await supabase.storage.createBucket("documents", options);
   if (error && !/already exists/i.test(error.message)) throw error;
-  console.log(error ? "Exists: Storage documents" : "Created: Storage documents");
-  console.log("Run supabase/migrations/0001_initial.sql in the Supabase SQL editor.");
+  if (error) {
+    const updated = await supabase.storage.updateBucket("documents", options);
+    if (updated.error) throw updated.error;
+  }
+  console.log(error ? "Updated: private Storage documents" : "Created: private Storage documents");
+  console.log("Apply all SQL files in supabase/migrations in numeric order, then run npm run doctor.");
 }
 
 main().catch((error: unknown) => {
