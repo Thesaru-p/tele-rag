@@ -85,12 +85,23 @@
           <button id="toggle-auth" class="plain-button" type="button">
             Create an account
           </button>
+          <button id="forgot-password" class="plain-button" type="button">Forgot your password?</button>
           <p id="auth-message" class="status-message" role="status"></p>
           <div class="auth-demo-link">
             <span>Just looking around?</span>
             <a href="/#demo">Explore the interactive demo ↗</a>
           </div>
         </div>
+      </section>
+
+      <section id="recovery-panel" class="workspace-card recovery-panel" hidden aria-labelledby="recovery-title">
+        <span class="eyebrow">A FRESH START</span>
+        <h1 id="recovery-title">Choose a new password</h1>
+        <form id="recovery-form" class="workspace-form">
+          <label for="new-password">New password<input id="new-password" type="password" minlength="8" autocomplete="new-password" required /></label>
+          <button class="button primary" type="submit">Save password and open workspace <span>↗</span></button>
+        </form>
+        <p id="recovery-message" class="status-message" role="status"></p>
       </section>
 
       <section id="workspace-panel" class="workspace-panel" hidden>
@@ -104,6 +115,16 @@
             Sign out ↗
           </button>
         </div>
+        <section class="workspace-overview" aria-label="Workspace overview">
+          <div class="overview-heading"><p id="readiness-status" role="status">Loading your workspace…</p><button id="refresh-dashboard" class="plain-button" type="button">Refresh ↻</button></div>
+          <div class="stat-grid">
+            <article class="stat-card"><strong id="stat-documents">—</strong><span>Documents ready</span></article>
+            <article class="stat-card"><strong id="stat-chunks">—</strong><span>Searchable passages</span></article>
+            <article class="stat-card"><strong id="stat-usage">—</strong><span id="usage-month">Questions this month</span></article>
+            <article class="stat-card"><strong id="stat-unanswered">—</strong><span>Questions to review</span></article>
+          </div>
+          <p id="dashboard-message" class="status-message" role="status"></p>
+        </section>
         <div class="workspace-grid">
           <section class="workspace-card document-card">
             <span class="card-step"><span>01</span> KNOWLEDGE BASE</span>
@@ -226,12 +247,41 @@
               </p>
             </details>
           </section>
+          <section class="workspace-card">
+            <span class="card-step"><span>04</span> MAKE IT YOURS</span>
+            <h2>Business settings</h2>
+            <p>Your business name appears in your workspace and your bot’s welcome message.</p>
+            <form id="business-form" class="workspace-form">
+              <label for="business-name-input">Business name<input id="business-name-input" maxlength="120" autocomplete="organization" required /></label>
+              <button class="button primary" type="submit">Save business name <span>↗</span></button>
+            </form>
+            <p id="settings-message" class="status-message" role="status"></p>
+            <p class="allowance-note">Includes 1,000 question attempts per workspace each UTC month. Each chat can ask 5 questions per minute, with a total of 30 per minute across the workspace. Attempts count even if an AI provider fails.</p>
+          </section>
+          <section class="workspace-card">
+            <span class="card-step"><span>05</span> CLOSE THE KNOWLEDGE GAPS</span>
+            <h2>Unanswered questions</h2>
+            <p>Add missing information to your documents, then mark the question reviewed. Shows the latest 100.</p>
+            <ul id="unanswered-list" class="review-list"></ul>
+          </section>
+          <section class="workspace-card history-card">
+            <span class="card-step"><span>06</span> THE RECENT CONVERSATIONS</span>
+            <h2>Conversation history</h2>
+            <p>The latest 50 messages from your workspace and Telegram, including source documents.</p>
+            <ol id="conversation-list" class="history-list"></ol>
+          </section>
         </div>
         <p class="workspace-footnote">
           Documents stay in your private Supabase project. OpenRouter processes
           extracted text for indexing and answers.
         </p>
       </section>
+      <dialog id="delete-document-dialog" class="delete-dialog" aria-labelledby="delete-document-title">
+        <h2 id="delete-document-title">Delete this document?</h2>
+        <p><strong id="delete-document-name"></strong> and its indexed passages will be removed. You can upload the original file again later.</p>
+        <div class="dialog-actions"><form method="dialog"><button class="button" type="submit">Keep document</button></form><button id="confirm-delete-document" class="button primary" type="button">Delete document</button></div>
+        <p id="delete-message" class="status-message" role="status"></p>
+      </dialog>
     </main>
   </body>
 </html>

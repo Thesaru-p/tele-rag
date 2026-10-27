@@ -1,18 +1,10 @@
 import { createServer } from 'node:http';
 import { readFile, mkdir, cp, stat } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
 import { resolve, extname, sep } from 'node:path';
 import { handleApi } from './api.mjs';
+import { loadEnv } from './env.mjs';
 
-try {
-  for (const line of readFileSync(resolve(import.meta.dirname, '..', '.env'), 'utf8').split(/\r?\n/)) {
-    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (!match || match[1] in process.env) continue;
-    process.env[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
-  }
-} catch {
-  // CI and production can supply environment variables directly.
-}
+loadEnv();
 
 const project = resolve(import.meta.dirname, '..');
 const building = process.argv.includes('--build');

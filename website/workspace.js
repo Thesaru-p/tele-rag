@@ -1,4 +1,5 @@
 import { buildWelcomeMessage, welcomeMessageReady } from './welcome-message.js';
+import { createSessionManager } from './session.js';
 
 const authPanel = document.querySelector('#auth-panel');
 const workspacePanel = document.querySelector('#workspace-panel');
@@ -6,13 +7,14 @@ const authForm = document.querySelector('#auth-form');
 const authMessage = document.querySelector('#auth-message');
 const toggleAuth = document.querySelector('#toggle-auth');
 const authSubmit = document.querySelector('#auth-submit');
-const sessionKey = 'telerag-session';
 let config;
 let creatingAccount = false;
 let workspaceBusiness = null;
 let workspaceDocuments = [];
 let telegramConnection = null;
 let documentsChanging = false;
+let recoveryMode = false;
+const sessions = createSessionManager({ storage: sessionStorage, request: authRequest, onExpired: () => { showLogin(); status(authMessage, 'Your session has expired. Sign in again.', true); } });
 
 function updateWelcomeMessage() {
   const panel = document.querySelector('#welcome-panel');
@@ -58,11 +60,6 @@ async function loadConfig() {
   config = await response.json();
 }
 
-function session() {
-  try { return JSON.parse(sessionStorage.getItem(sessionKey) || 'null'); }
-  catch { return null; }
-}
-
 async function authRequest(path, body) {
   const response = await fetch(`${config.supabaseUrl}/auth/v1/${path}`, {
     method: 'POST', headers: { apikey: config.supabaseAnonKey, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -73,26 +70,37 @@ async function authRequest(path, body) {
 }
 
 async function api(path, options = {}) {
-  const current = session();
+  const token = await sessions.accessToken();
   const headers = new Headers(options.headers || {});
-  headers.set('Authorization', `Bearer ${current.access_token}`);
+  headers.set('Authorization', `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
-  const response = await fetch(path, { ...options, headers });
+  let response = await fetch(path, { ...options, headers });
+  if (response.status === 401) {
+    headers.set('Authorization', `Bearer ${await sessions.accessToken(true)}`);
+    response = await fetch(path, { ...options, headers });
+  }
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'The request failed.');
   return data;
 }
 
 function showLogin() {
+  recoveryMode = false;
+  document.querySelector('#recovery-panel').hidden = true;
   workspaceBusiness = null;
   workspaceDocuments = [];
   telegramConnection = null;
   updateWelcomeMessage();
   authPanel.hidden = false;
   workspacePanel.hidden = true;
+  document.querySelector('#answer-box').textContent = 'Your answer will appear here, along with its source document.';
+  document.querySelector('#source-list').replaceChildren();
+  document.querySelector('#conversation-list').replaceChildren();
+  document.querySelector('#unanswered-list').replaceChildren();
 }
 
 function showWorkspace() {
+  document.querySelector('#recovery-panel').hidden = true;
   authPanel.hidden = true;
   workspacePanel.hidden = false;
   loadWorkspace().catch(error => status(document.querySelector('#upload-message'), error.message, true));
@@ -120,7 +128,7 @@ authForm.addEventListener('submit', async event => {
       status(authMessage, 'Account created. Check your email to confirm it, then sign in.');
       return;
     }
-    sessionStorage.setItem(sessionKey, JSON.stringify(data));
+    sessions.save(data);
     status(authMessage, '');
     showWorkspace();
   } catch (error) {
@@ -136,6 +144,7 @@ async function loadWorkspace() {
   const business = await api('/api/business');
   workspaceBusiness = business;
   document.querySelector('#business-name').textContent = business.name;
+  if (document.activeElement !== document.querySelector('#business-name-input')) document.querySelector('#business-name-input').value = business.name;
   await loadTelegramStatus();
   const docs = await api('/api/documents');
   workspaceDocuments = docs;
@@ -148,8 +157,14 @@ async function loadWorkspace() {
     const name = document.createElement('span');
     name.textContent = doc.file_name;
     const state = document.createElement('small');
-    state.textContent = doc.status;
+    state.textContent = doc.status === 'ready' ? `Ready · ${doc.chunk_count} chunks` : doc.status;
     item.append(name, state);
+    if (doc.error_message) {
+      const detail = document.createElement('p');
+      detail.className = 'document-error';
+      detail.textContent = doc.error_message;
+      item.append(detail);
+    }
     if (doc.status === 'failed') {
       const retry = document.createElement('button');
       retry.className = 'reindex-button';
@@ -174,6 +189,40 @@ async function loadWorkspace() {
       });
       item.append(retry);
     }
+    if (doc.status !== 'processing') {
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'reindex-button danger-button';
+      remove.textContent = 'Delete document';
+      remove.setAttribute('aria-label', `Delete ${doc.file_name}`);
+      remove.addEventListener('click', () => {
+        const dialog = document.querySelector('#delete-document-dialog');
+        document.querySelector('#delete-document-name').textContent = doc.file_name;
+        const confirm = document.querySelector('#confirm-delete-document');
+        confirm.onclick = async () => {
+          confirm.disabled = true;
+          remove.disabled = true;
+          documentsChanging = true;
+          updateWelcomeMessage();
+          try {
+            await api(`/api/documents/${encodeURIComponent(doc.id)}`, { method: 'DELETE' });
+            status(document.querySelector('#upload-message'), `Deleted ${doc.file_name} and its indexed passages.`);
+            dialog.close();
+            await loadWorkspace();
+          } catch (error) {
+            status(document.querySelector('#delete-message'), error.message, true);
+          } finally {
+            documentsChanging = false;
+            updateWelcomeMessage();
+            confirm.disabled = false;
+            remove.disabled = false;
+          }
+        };
+        status(document.querySelector('#delete-message'), '');
+        dialog.showModal();
+      });
+      item.append(remove);
+    }
     list.append(item);
   }
   if (!docs.length) {
@@ -182,7 +231,83 @@ async function loadWorkspace() {
     empty.textContent = 'No documents yet. Upload one to get started.';
     list.append(empty);
   }
+  await loadDashboard();
 }
+
+async function loadDashboard() {
+  const feedback = document.querySelector('#dashboard-message');
+  try {
+    const data = await api('/api/dashboard');
+    document.querySelector('#stat-documents').textContent = `${data.readyDocuments} / ${data.documents}`;
+    document.querySelector('#stat-chunks').textContent = data.chunks.toLocaleString();
+    document.querySelector('#stat-usage').textContent = `${data.usage.used} / ${data.usage.limit.toLocaleString()}`;
+    document.querySelector('#stat-unanswered').textContent = data.unanswered.length === 100 ? '100+' : data.unanswered.length;
+    document.querySelector('#usage-month').textContent = `Questions · ${data.usage.month} UTC`;
+    document.querySelector('#readiness-status').textContent = !data.documents ? 'Start by uploading a document below.' : data.readyDocuments !== data.documents ? 'Some documents need attention. Check their status below.' : telegramConnection?.connected ? 'Your knowledge base and Telegram bot are ready.' : 'Your knowledge base is ready. Ask a question here or connect Telegram below.';
+    const unanswered = document.querySelector('#unanswered-list');
+    unanswered.replaceChildren();
+    for (const question of data.unanswered) {
+      const row = document.createElement('li');
+      const text = document.createElement('span');
+      text.textContent = question.question;
+      const resolve = document.createElement('button');
+      resolve.className = 'plain-button';
+      resolve.type = 'button';
+      resolve.textContent = 'Mark reviewed';
+      resolve.addEventListener('click', async () => {
+        resolve.disabled = true;
+        try { await api(`/api/unanswered/${question.id}`, { method: 'DELETE' }); await loadDashboard(); }
+        catch (error) { status(feedback, error.message, true); resolve.disabled = false; }
+      });
+      row.append(text, resolve);
+      unanswered.append(row);
+    }
+    if (!data.unanswered.length) unanswered.textContent = 'No unanswered questions yet. Knowledge gaps will appear here.';
+    const conversations = document.querySelector('#conversation-list');
+    conversations.replaceChildren();
+    for (const message of [...data.conversations].reverse()) {
+      const row = document.createElement('li');
+      row.className = `history-message history-${message.role}`;
+      const label = document.createElement('strong');
+      label.textContent = `${message.role === 'user' ? 'Customer' : 'Assistant'} · ${message.chat_id.startsWith('telegram:') ? 'Telegram' : 'Workspace'}`;
+      const time = document.createElement('time');
+      time.dateTime = message.created_at;
+      time.textContent = new Date(message.created_at).toLocaleString();
+      const text = document.createElement('p');
+      text.textContent = message.content;
+      row.append(label, time, text);
+      if (message.sources?.length) {
+        const sources = document.createElement('small');
+        sources.textContent = `Sources: ${message.sources.join(', ')}`;
+        row.append(sources);
+      }
+      conversations.append(row);
+    }
+    if (!data.conversations.length) conversations.textContent = 'Your latest conversations will appear here.';
+    status(feedback, '');
+  } catch (error) { status(feedback, error.message, true); }
+}
+
+document.querySelector('#business-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('button');
+  button.disabled = true;
+  try {
+    workspaceBusiness = await api('/api/business', { method: 'PATCH', body: JSON.stringify({ name: document.querySelector('#business-name-input').value }) });
+    document.querySelector('#business-name').textContent = workspaceBusiness.name;
+    updateWelcomeMessage();
+    status(document.querySelector('#settings-message'), 'Business name saved. Your bot greeting has been updated.');
+  } catch (error) { status(document.querySelector('#settings-message'), error.message, true); }
+  finally { button.disabled = false; }
+});
+
+document.querySelector('#refresh-dashboard').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try { await loadWorkspace(); }
+  catch (error) { status(document.querySelector('#dashboard-message'), error.message, true); }
+  finally { button.disabled = false; }
+});
 
 async function loadTelegramStatus() {
   const label = document.querySelector('#telegram-status');
@@ -213,6 +338,7 @@ document.querySelector('#telegram-form').addEventListener('submit', async event 
     await api('/api/telegram', { method: 'POST', body: JSON.stringify({ token: input.value }) });
     input.value = '';
     await loadTelegramStatus();
+    await loadDashboard();
   } catch (error) {
     status(document.querySelector('#telegram-status'), error.message, true);
   } finally {
@@ -226,6 +352,7 @@ document.querySelector('#telegram-disconnect').addEventListener('click', async e
   try {
     await api('/api/telegram', { method: 'DELETE' });
     await loadTelegramStatus();
+    await loadDashboard();
   } catch (error) {
     status(document.querySelector('#telegram-status'), error.message, true);
   } finally {
@@ -239,7 +366,10 @@ document.querySelector('#upload-form').addEventListener('submit', async event =>
   const file = input.files[0];
   if (!file) return;
   const message = document.querySelector('#upload-message');
-  if (file.size > 10 * 1024 * 1024) return status(message, 'Choose a file no larger than 10 MiB.', true);
+  const types = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', csv: 'text/csv', txt: 'text/plain', md: 'text/markdown' };
+  const type = types[file.name.split('.').at(-1).toLowerCase()];
+  if (!type) return status(message, 'Choose a PDF, DOCX, CSV, TXT, or Markdown file.', true);
+  if (!file.size || file.size > 10 * 1024 * 1024) return status(message, 'Choose a nonempty file no larger than 10 MiB.', true);
   const form = event.currentTarget;
   form.querySelector('button').disabled = true;
   documentsChanging = true;
@@ -251,7 +381,7 @@ document.querySelector('#upload-form').addEventListener('submit', async event =>
     });
     status(message, 'Uploading your file directly to private Supabase storage…');
     const uploaded = await fetch(upload.signedUrl, {
-      method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'false' }, body: file,
+      method: 'PUT', headers: { 'Content-Type': type, 'x-upsert': 'false' }, body: file,
     });
     if (!uploaded.ok) {
       const detail = await uploaded.json().catch(() => ({}));
@@ -263,6 +393,7 @@ document.querySelector('#upload-form').addEventListener('submit', async event =>
     });
     status(message, `Indexed ${data.chunks} text chunks from ${data.name}.`);
     input.value = '';
+    document.querySelector('.file-picker-copy strong').textContent = 'Choose a document';
   } catch (error) {
     status(message, error.message, true);
   } finally {
@@ -271,6 +402,10 @@ document.querySelector('#upload-form').addEventListener('submit', async event =>
     updateWelcomeMessage();
     form.querySelector('button').disabled = false;
   }
+});
+
+document.querySelector('#file-input').addEventListener('change', event => {
+  document.querySelector('.file-picker-copy strong').textContent = event.currentTarget.files[0]?.name || 'Choose a document';
 });
 
 document.querySelector('#question-form').addEventListener('submit', async event => {
@@ -293,6 +428,7 @@ document.querySelector('#question-form').addEventListener('submit', async event 
       sources.append(item);
     }
     question.value = '';
+    await loadDashboard();
   } catch (error) {
     answerBox.textContent = error.message;
   } finally {
@@ -301,8 +437,65 @@ document.querySelector('#question-form').addEventListener('submit', async event 
 });
 
 document.querySelector('#sign-out').addEventListener('click', () => {
-  sessionStorage.removeItem(sessionKey);
+  const token = sessions.read()?.access_token;
+  if (token) fetch(`${config.supabaseUrl}/auth/v1/logout`, { method: 'POST', headers: { apikey: config.supabaseAnonKey, Authorization: `Bearer ${token}` } }).catch(() => {});
+  sessions.clear();
   showLogin();
 });
 
-loadConfig().then(() => session()?.access_token ? showWorkspace() : showLogin()).catch(error => status(authMessage, error.message, true));
+document.querySelector('#forgot-password').addEventListener('click', async event => {
+  const email = document.querySelector('#email');
+  if (!email.reportValidity() || !email.value.trim()) { status(authMessage, 'Enter your email address first.', true); return; }
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    await authRequest(`recover?redirect_to=${encodeURIComponent(`${location.origin}/workspace`)}`, { email: email.value.trim() });
+    status(authMessage, 'If an account exists for this address, a password reset link is on its way.');
+  } catch (error) { status(authMessage, error.message, true); }
+  finally { button.disabled = false; }
+});
+
+document.querySelector('#recovery-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('button');
+  button.disabled = true;
+  try {
+    const token = await sessions.accessToken();
+    const response = await fetch(`${config.supabaseUrl}/auth/v1/user`, { method: 'PUT', headers: { apikey: config.supabaseAnonKey, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.querySelector('#new-password').value }) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.msg || data.message || 'Could not update your password. Request a new reset link.');
+    recoveryMode = false;
+    document.querySelector('#recovery-panel').hidden = true;
+    document.querySelector('#new-password').value = '';
+    showWorkspace();
+  } catch (error) { status(document.querySelector('#recovery-message'), error.message, true); }
+  finally { button.disabled = false; }
+});
+
+async function initialize() {
+  await loadConfig();
+  const callback = new URLSearchParams(location.hash.slice(1));
+  if (callback.has('error_description')) {
+    history.replaceState(null, '', location.pathname);
+    showLogin();
+    status(authMessage, callback.get('error_description').replace(/\+/g, ' '), true);
+    return;
+  }
+  if (callback.has('access_token')) {
+    const token = callback.get('access_token');
+    history.replaceState(null, '', location.pathname);
+    const verified = await fetch(`${config.supabaseUrl}/auth/v1/user`, { headers: { apikey: config.supabaseAnonKey, Authorization: `Bearer ${token}` } });
+    if (!verified.ok) throw new Error('This sign-in link is invalid or expired. Request a new link.');
+    sessions.save({ access_token: token, refresh_token: callback.get('refresh_token'), expires_in: Number(callback.get('expires_in')) || 3600 });
+    if (callback.get('type') === 'recovery') {
+      recoveryMode = true;
+      authPanel.hidden = true;
+      workspacePanel.hidden = true;
+      document.querySelector('#recovery-panel').hidden = false;
+      return;
+    }
+  }
+  if (sessions.read()?.access_token) { await sessions.accessToken(); showWorkspace(); }
+  else showLogin();
+}
+initialize().catch(error => { if (!recoveryMode) showLogin(); status(authMessage, error.message, true); });
