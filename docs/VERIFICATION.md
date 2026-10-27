@@ -2,15 +2,16 @@
 
 ## Passed locally
 
-- `npm run check`: TypeScript checking, **30 tests**, and the production static build.
+- `npm run check`: backend/frontend TypeScript checking, **40 tests** (30 API/database/session/Telegram and 10 React/client tests), and the Vite production build.
 - Actual SQL migrations executed against local PostgreSQL with pgvector. Tests cover RLS, tenant-filtered retrieval from ready files, per-chat/workspace/minute limits, UTC monthly allowances, and cascading chunk deletion.
 - Mocked API tests cover verified authentication, metadata validation, tenant boundaries, direct-upload finalization, indexing failures/retries, checked citations, unanswered-question review, dashboard queries, Telegram sources/secrets/deduplication, and limit responses.
 - Session tests cover concurrent refresh, token rotation, expired refresh credentials, sign-out during refresh, and a newer sign-in during refresh.
 - Existing welcome-message and Telegram retry tests passed.
+- React tests cover source selection, pending-demo cancellation, unsupported sample questions, theme persistence with blocked-storage fallback, recovery navigation/callback handling, initialization under repeated effects, and rejected/stale authenticated responses.
 - Live OpenRouter smoke test: the configured embedding model returned 768 dimensions; the configured chat model returned a supported structured answer with the correct source. Only fictional sample text was sent.
-- Browser checks with isolated mock services: sign-in, persisted session after reload, business settings, cited answers, unsupported-answer review, delete confirmation/cancel, sign-out, and password-recovery email validation.
+- React browser checks with isolated mock services: sign-in, persisted session after reload, business settings, cited answers, unsupported-answer review, direct file upload and indexing, delete confirmation/cancel/removal, Telegram connection UI, welcome copying, and sign-out. Bot/API/provider calls in these checks are mocked; no live Telegram connection is implied.
 - Public demo checked on the final local server: sample answer and its source button select the matching document preview.
-- Desktop and 390px mobile views inspected. Mobile had no horizontal overflow. No browser warning/error logs were captured in the fixture checks.
+- Light and dark desktop layouts plus 390px mobile layouts inspected. The landing page was also checked at 320px. No horizontal overflow was found. Theme switching, source previews, scroll progress, and walkthrough updates were checked. Decorative motion has a reduced-motion fallback. No browser warning/error logs were captured in the React workspace fixture checks.
 - Production dependency audit reported zero vulnerabilities.
 
 ## Release setup deferred by the owner
@@ -25,10 +26,16 @@ Live signup/email recovery, document ingestion against the upgraded remote schem
 
 These screenshots show fictional sample data from an isolated local test server. They are UI verification evidence, not screenshots of production customers or a live Telegram connection.
 
-![Desktop workspace with sample data](screenshots/workspace-desktop.jpg)
+![React desktop workspace with sample data](screenshots/react-workspace-light.jpg)
 
-![Mobile workspace with sample data](screenshots/workspace-mobile.jpg)
+![React dark workspace with sample data](screenshots/react-workspace-dark.jpg)
 
-The public scripted demo on the final local server:
+![React mobile workspace with sample data](screenshots/react-workspace-mobile.jpg)
 
-![Public scripted demo](screenshots/public-demo.jpg)
+The redesigned React landing page:
+
+![Light landing page](screenshots/react-landing-light.jpg)
+
+![Dark landing page](screenshots/react-landing-dark.jpg)
+
+![Mobile landing page](screenshots/react-landing-mobile.jpg)

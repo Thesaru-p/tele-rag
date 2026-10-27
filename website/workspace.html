@@ -1,287 +1,30 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f8f9fb" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f1e9" />
     <meta
       name="description"
-      content="Upload business documents and ask grounded questions with TeleRAG."
+      content="Manage your TeleRAG documents, test answers, and connect your Telegram bot."
     />
-    <title>Workspace · TeleRAG</title>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/workspace.css" />
-    <script src="/workspace.js" type="module"></script>
+    <title>Your workspace — TeleRAG</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      try {
+        var t = localStorage.getItem("telerag-theme");
+        document.documentElement.dataset.theme =
+          t === "dark" ||
+          (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)
+            ? "dark"
+            : "light";
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
   </head>
-  <body class="workspace-body">
-    <header class="site-header workspace-header">
-      <a class="brand" href="/" aria-label="TeleRAG home"
-        ><span class="brand-mark"
-          ><svg viewBox="0 0 24 24">
-            <path d="m3 10 18-7-6 18-4-7-8-4Zm8 4 5-6" /></svg></span
-        >tele<span class="brand-rag">rag</span></a
-      >
-      <a class="text-link" href="/">Back to the website <span>↗</span></a>
-    </header>
-    <main class="workspace-main">
-      <section id="auth-panel" class="auth-panel">
-        <div class="auth-story">
-          <span class="eyebrow">A HOME FOR YOUR KNOW-HOW</span>
-          <h1>
-            Your knowledge.<br />A little more<br />
-            <span>connected.</span>
-          </h1>
-          <p>
-            Bring your files together. Find the right answer.<br />
-            Give your customers a conversation worth having.
-          </p>
-          <div class="auth-illustration" aria-hidden="true">
-            <div class="auth-ring"></div>
-            <div class="auth-ring auth-ring-two"></div>
-            <span class="auth-file auth-file-back">PDF<span>≡</span></span
-            ><span class="auth-file auth-file-front">DOCX<span>≡</span></span
-            ><span class="auth-hub"
-              ><svg viewBox="0 0 24 24">
-                <path d="m3 10 18-7-6 18-4-7-8-4Zm8 4 5-6" /></svg></span
-            ><span class="auth-dot"></span>
-          </div>
-          <span class="auth-story-note"
-            ><span class="live-dot"></span> Built around the answers you already
-            have.</span
-          >
-        </div>
-        <div class="auth-content">
-          <span class="auth-icon"
-            ><svg viewBox="0 0 24 24">
-              <rect x="4" y="4" width="16" height="16" rx="4" />
-              <path d="M9 4v16m4-11h3m-3 4h3" /></svg
-          ></span>
-          <span class="eyebrow">YOUR WORKSPACE AWAITS</span>
-          <h2 id="auth-title">Welcome back.</h2>
-          <p id="auth-description">Sign in and pick up where you left off.</p>
-          <form id="auth-form" class="workspace-form">
-            <label
-              >Email address<input
-                id="email"
-                type="email"
-                placeholder="you@yourbusiness.com"
-                autocomplete="email"
-                required
-            /></label>
-            <label
-              >Password<input
-                id="password"
-                type="password"
-                placeholder="At least 8 characters"
-                minlength="8"
-                autocomplete="current-password"
-                required
-            /></label>
-            <button class="button primary" id="auth-submit" type="submit">
-              Sign in to your workspace <span>↗</span>
-            </button>
-          </form>
-          <button id="toggle-auth" class="plain-button" type="button">
-            Create an account
-          </button>
-          <button id="forgot-password" class="plain-button" type="button">Forgot your password?</button>
-          <p id="auth-message" class="status-message" role="status"></p>
-          <div class="auth-demo-link">
-            <span>Just looking around?</span>
-            <a href="/#demo">Explore the interactive demo ↗</a>
-          </div>
-        </div>
-      </section>
-
-      <section id="recovery-panel" class="workspace-card recovery-panel" hidden aria-labelledby="recovery-title">
-        <span class="eyebrow">A FRESH START</span>
-        <h1 id="recovery-title">Choose a new password</h1>
-        <form id="recovery-form" class="workspace-form">
-          <label for="new-password">New password<input id="new-password" type="password" minlength="8" autocomplete="new-password" required /></label>
-          <button class="button primary" type="submit">Save password and open workspace <span>↗</span></button>
-        </form>
-        <p id="recovery-message" class="status-message" role="status"></p>
-      </section>
-
-      <section id="workspace-panel" class="workspace-panel" hidden>
-        <div class="workspace-title-row">
-          <div>
-            <span class="eyebrow">YOUR KNOWLEDGE, CONNECTED</span>
-            <h1 id="business-name">Your workspace</h1>
-            <p>The right information. Ready for the next conversation.</p>
-          </div>
-          <button id="sign-out" class="plain-button" type="button">
-            Sign out ↗
-          </button>
-        </div>
-        <section class="workspace-overview" aria-label="Workspace overview">
-          <div class="overview-heading"><p id="readiness-status" role="status">Loading your workspace…</p><button id="refresh-dashboard" class="plain-button" type="button">Refresh ↻</button></div>
-          <div class="stat-grid">
-            <article class="stat-card"><strong id="stat-documents">—</strong><span>Documents ready</span></article>
-            <article class="stat-card"><strong id="stat-chunks">—</strong><span>Searchable passages</span></article>
-            <article class="stat-card"><strong id="stat-usage">—</strong><span id="usage-month">Questions this month</span></article>
-            <article class="stat-card"><strong id="stat-unanswered">—</strong><span>Questions to review</span></article>
-          </div>
-          <p id="dashboard-message" class="status-message" role="status"></p>
-        </section>
-        <div class="workspace-grid">
-          <section class="workspace-card document-card">
-            <span class="card-step"><span>01</span> KNOWLEDGE BASE</span>
-            <h2>Your documents</h2>
-            <p>
-              Add the information you want your assistant to know. PDF, DOCX,
-              CSV, TXT, or Markdown, up to 10 MiB.
-            </p>
-            <form id="upload-form" class="upload-form">
-              <label class="file-picker"
-                ><span class="file-picker-copy"
-                  ><strong>Choose a document</strong
-                  ><small>Browse your device · max 10 MiB</small></span
-                ><input
-                  id="file-input"
-                  type="file"
-                  accept=".pdf,.docx,.csv,.txt,.md"
-                  required /></label
-              ><button class="button primary" type="submit">
-                Upload & index <span>↗</span>
-              </button>
-            </form>
-            <p id="upload-message" class="status-message" role="status"></p>
-            <ul id="document-list" class="document-list-live"></ul>
-          </section>
-          <section class="workspace-card chat-card-live">
-            <span class="card-step"><span>02</span> THE CONVERSATION</span>
-            <h2>Ask your documents</h2>
-            <p>
-              Try a question. TeleRAG finds relevant passages before answering.
-            </p>
-            <div id="answer-box" class="answer-box" role="status">
-              Your answer will appear here, along with its source document.
-            </div>
-            <form id="question-form" class="question-form">
-              <label class="sr-only" for="question-input">Ask a question</label
-              ><input
-                id="question-input"
-                maxlength="1000"
-                placeholder="Ask something about your documents…"
-                required
-              /><button class="button primary" type="submit">
-                Ask <span>↗</span>
-              </button>
-            </form>
-            <ul id="source-list" class="source-list"></ul>
-          </section>
-          <section class="workspace-card telegram-card">
-            <span class="card-step"><span>03</span> TELEGRAM · OPTIONAL</span>
-            <h2>Bring your assistant to Telegram</h2>
-            <p>
-              Connect a Telegram bot so customers can get answers from the
-              documents you’ve uploaded.
-            </p>
-            <p id="telegram-status" class="status-message" role="status">
-              Checking connection…
-            </p>
-            <form id="telegram-form" class="workspace-form telegram-form">
-              <label for="telegram-token"
-                >Bot token<input
-                  id="telegram-token"
-                  type="password"
-                  autocomplete="off"
-                  placeholder="Paste the token from BotFather"
-                  required
-              /></label>
-              <button
-                id="telegram-connect"
-                class="button primary"
-                type="submit"
-              >
-                Connect bot <span>↗</span>
-              </button>
-            </form>
-            <button
-              id="telegram-disconnect"
-              class="plain-button"
-              type="button"
-              hidden
-            >
-              Disconnect bot
-            </button>
-            <section id="welcome-panel" class="welcome-panel" aria-labelledby="welcome-heading" hidden>
-              <div class="welcome-heading-row">
-                <div>
-                  <span class="eyebrow">READY FOR YOUR FIRST HELLO</span>
-                  <h3 id="welcome-heading">Your bot’s welcome message</h3>
-                </div>
-                <button id="copy-welcome" class="button welcome-copy" type="button">Copy welcome message</button>
-              </div>
-              <label class="sr-only" for="welcome-message">Welcome message to copy</label>
-              <textarea id="welcome-message" class="welcome-message" rows="4" readonly></textarea>
-              <p class="welcome-help">Your bot sends this when someone presses Start. To also show it before Start, open <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">BotFather ↗</a>, send <code>/setdescription</code>, select your bot, and paste this paragraph.</p>
-              <p id="welcome-copy-status" class="status-message" role="status"></p>
-            </section>
-            <details class="telegram-guide">
-              <summary>Need to create a bot? Follow these steps</summary>
-              <ol class="telegram-steps">
-                <li>
-                  <a
-                    href="https://t.me/BotFather"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >Open BotFather on Telegram ↗</a
-                  >.
-                </li>
-                <li>
-                  Send <code>/newbot</code>, then choose a display name and a
-                  username ending in <code>bot</code>.
-                </li>
-                <li>
-                  Copy the token BotFather gives you, return here, and paste it
-                  above.
-                </li>
-              </ol>
-              <p class="telegram-note">
-                Keep the token private. Anyone who has it can control your bot.
-                If it leaks, revoke it with BotFather and connect the
-                replacement.
-              </p>
-            </details>
-          </section>
-          <section class="workspace-card">
-            <span class="card-step"><span>04</span> MAKE IT YOURS</span>
-            <h2>Business settings</h2>
-            <p>Your business name appears in your workspace and your bot’s welcome message.</p>
-            <form id="business-form" class="workspace-form">
-              <label for="business-name-input">Business name<input id="business-name-input" maxlength="120" autocomplete="organization" required /></label>
-              <button class="button primary" type="submit">Save business name <span>↗</span></button>
-            </form>
-            <p id="settings-message" class="status-message" role="status"></p>
-            <p class="allowance-note">Includes 1,000 question attempts per workspace each UTC month. Each chat can ask 5 questions per minute, with a total of 30 per minute across the workspace. Attempts count even if an AI provider fails.</p>
-          </section>
-          <section class="workspace-card">
-            <span class="card-step"><span>05</span> CLOSE THE KNOWLEDGE GAPS</span>
-            <h2>Unanswered questions</h2>
-            <p>Add missing information to your documents, then mark the question reviewed. Shows the latest 100.</p>
-            <ul id="unanswered-list" class="review-list"></ul>
-          </section>
-          <section class="workspace-card history-card">
-            <span class="card-step"><span>06</span> THE RECENT CONVERSATIONS</span>
-            <h2>Conversation history</h2>
-            <p>The latest 50 messages from your workspace and Telegram, including source documents.</p>
-            <ol id="conversation-list" class="history-list"></ol>
-          </section>
-        </div>
-        <p class="workspace-footnote">
-          Documents stay in your private Supabase project. OpenRouter processes
-          extracted text for indexing and answers.
-        </p>
-      </section>
-      <dialog id="delete-document-dialog" class="delete-dialog" aria-labelledby="delete-document-title">
-        <h2 id="delete-document-title">Delete this document?</h2>
-        <p><strong id="delete-document-name"></strong> and its indexed passages will be removed. You can upload the original file again later.</p>
-        <div class="dialog-actions"><form method="dialog"><button class="button" type="submit">Keep document</button></form><button id="confirm-delete-document" class="button primary" type="button">Delete document</button></div>
-        <p id="delete-message" class="status-message" role="status"></p>
-      </dialog>
-    </main>
+  <body data-page="workspace">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
