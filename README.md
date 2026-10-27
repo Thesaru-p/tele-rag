@@ -1,88 +1,195 @@
+<div align="center">
+
+<img src="website/favicon.svg" alt="TeleRAG logo" width="64" height="64" />
+
 # TeleRAG
 
-Turn business documents into source-backed customer support answers in a web workspace and on Telegram.
+### Your business knowledge, in conversation.
 
-TeleRAG is an MVP built with Node.js, Supabase Auth/Storage/Postgres, pgvector, and OpenRouter. The landing page includes an interactive, scripted demo that works without an account or API keys.
+Turn handbooks, price lists, and policies into source-backed answers in your workspace and on Telegram.
 
-## Features
+![Node.js](https://img.shields.io/badge/Node.js-22.13%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20Storage-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Telegram](https://img.shields.io/badge/Telegram-Bot%20API-26A5E4?style=flat-square&logo=telegram&logoColor=white)
 
-- Email/password accounts, session renewal, email confirmation callbacks, and password recovery
-- One isolated business workspace per account, with an editable business name
-- Private direct-to-storage uploads: PDF, DOCX, CSV, TXT, and Markdown, up to 10 MiB each
-- Text extraction, overlapping chunks, batched 768-dimensional embeddings, and vector retrieval from ready documents
-- Grounded answers with checked source references; unsupported answers are recorded for review
-- Document status, indexing errors, interrupted-job recovery, retry, and deletion
-- Owner dashboard with passage counts, monthly usage, recent conversations, and unanswered-question review
-- Telegram bot connection, encrypted tokens, authenticated webhooks, duplicate-update protection, source labels, and a generated `/start` welcome message
-- Atomic database limits: 5 question attempts per chat/minute, 30 per workspace/minute, and 1,000 per workspace/UTC month
-- Automated API, authentication, Telegram, and PostgreSQL/pgvector tests, plus GitHub Actions CI
+[Features](#what-you-can-do) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Deployment](#deployment) · [Documentation](#documentation)
 
-## Run locally
+</div>
 
-Requires Node.js **22.13 or later** and a Supabase project.
+<br />
 
-```powershell
+![TeleRAG interactive demo showing a document-backed answer and its source](docs/screenshots/public-demo.jpg)
+
+<p align="center"><sub>The public demo uses fictional sample documents and scripted answers. The authenticated workspace runs the full RAG pipeline.</sub></p>
+
+## What you can do
+
+TeleRAG brings document management, retrieval-augmented generation, and customer conversations into one workspace.
+
+| Capability | What it gives you |
+| --- | --- |
+| **A private knowledge base** | Upload PDF, DOCX, CSV, TXT, and Markdown directly to private Supabase Storage. |
+| **Answers with sources** | Retrieve relevant document passages, generate an answer, and see the supporting file names. |
+| **A connected Telegram bot** | Connect a BotFather token, generate a welcome message, and answer customer questions from the same documents. |
+| **Document controls** | Track indexing status, inspect errors, retry interrupted jobs, and delete files and their indexed passages. |
+| **An owner dashboard** | Review recent conversations, monthly usage, searchable passage counts, and unanswered questions. |
+| **Account and usage controls** | Email/password sign-in, session renewal, password recovery, tenant isolation, and atomic request limits. |
+
+## How it works
+
+### Prepare the knowledge
+
+**Upload → extract text → create overlapping chunks → embed → store in pgvector**
+
+Files upload directly from the browser to private storage using a signed URL. The server extracts text, creates small overlapping passages, and batches embedding requests through OpenRouter. Each document and its chunks belong to a single business workspace.
+
+### Answer a question
+
+**Question → embed → retrieve relevant passages → generate → return answer + sources**
+
+The API checks the question allowance, embeds the question with the same model used for indexing, and retrieves passages from that business's ready documents. The chat model receives the question and retrieved excerpts. The server validates the returned source numbers before presenting the answer. Questions without supporting information are saved for the owner to review.
+
+<details>
+<summary><strong>View the RAG system diagram</strong></summary>
+
+<br />
+
+![TeleRAG RAG architecture: document preparation, embeddings, vector retrieval, and answer generation](output/imagegen/telerag-rag-system-v2.png)
+
+</details>
+
+<details>
+<summary><strong>View the business and customer workflow</strong></summary>
+
+<br />
+
+![TeleRAG workflow: create a workspace, index documents, connect Telegram, answer questions, and review gaps](output/imagegen/telerag-customer-workflow-v2.png)
+
+</details>
+
+## Quick start
+
+### 1. Install the project
+
+You need **Node.js 22.13 or later**, a Supabase project, and an OpenRouter API key. A Telegram bot and a public HTTPS deployment are needed only for Telegram integration.
+
+```sh
+git clone --branch final-touches https://github.com/Thesaru-p/tele-rag.git
+cd tele-rag
 npm ci
-Copy-Item .env.example .env
 ```
 
-Fill in `.env`, then configure the private storage bucket:
+### 2. Configure the environment
 
-```powershell
+Copy [`.env.example`](.env.example) to `.env` and replace the placeholders with your project values.
+
+```dotenv
+SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+SUPABASE_ANON_KEY=<ANON_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
+
+OPENROUTER_API_KEY=<OPENROUTER_API_KEY>
+OPENROUTER_CHAT_MODEL=qwen/qwen3.8-27b
+OPENROUTER_EMBEDDING_MODEL=thenlper/gte-base
+
+# Required only for Telegram: use your deployed public HTTPS origin.
+TELEGRAM_WEBHOOK_BASE_URL=https://<YOUR_PUBLIC_APP_DOMAIN>
+```
+
+The service-role and OpenRouter keys are server-side credentials. Keep them in `.env` or your deployment's environment settings; `.env` is ignored by Git.
+
+### 3. Set up storage and the database
+
+Create or configure the private document bucket:
+
+```sh
 npm run setup:supabase
 ```
 
-Apply the SQL files in `supabase/migrations/` in numeric order using the Supabase SQL Editor. For an existing installation with migrations 0001 and 0002 already applied, apply **only `0003_workspace_release.sql`**. SQL setup is separate from storage setup.
+Then run these files in the **Supabase SQL Editor**, in order:
 
-Enable email/password authentication. Set your Supabase Auth site URL and redirect allowlist to include `http://localhost:3000/workspace` and your deployed `/workspace` URL. If email confirmation is enabled, follow the confirmation link before signing in. Password recovery also uses this redirect configuration.
+1. [`0001_initial.sql`](supabase/migrations/0001_initial.sql) — tables, row-level security, and pgvector.
+2. [`0002_telegram_bots.sql`](supabase/migrations/0002_telegram_bots.sql) — encrypted bot credentials and webhook configuration.
+3. [`0003_workspace_release.sql`](supabase/migrations/0003_workspace_release.sql) — document diagnostics, conversation sources, and usage controls.
 
-```powershell
+**Upgrading an existing installation?** If 0001 and 0002 are already applied, run only 0003. The storage command does not apply SQL migrations.
+
+### 4. Configure authentication
+
+Enable email/password sign-in in Supabase Auth. Set the Site URL for your application and include `http://localhost:3000/workspace` in the redirect allowlist. Add the deployed `/workspace` URL when you deploy. Email confirmation and password recovery use this configuration.
+
+### 5. Start the application
+
+```sh
 npm run doctor
 npm run dev
 ```
 
-Open [the workspace](http://localhost:3000/workspace), create an account, and upload [the sample handbook](examples/studio-handbook.md). Ask: “How much is the beginner pottery class?”
+Open [localhost:3000](http://localhost:3000) for the public demo or [localhost:3000/workspace](http://localhost:3000/workspace) for your account.
 
-## Verify
+Create an account, upload [the sample studio handbook](examples/studio-handbook.md), and ask:
 
-```powershell
-npm run check
-```
+> How much is the beginner pottery class?
 
-This runs TypeScript checking, the full test suite, and the static build. Tests use mocked external APIs and a local WASM PostgreSQL engine with pgvector; they require no production credentials and make no paid AI calls. Database tests execute the actual migrations and verify RLS, vector isolation, rate limits, monthly usage, and cascading deletion.
+You should receive an answer based on the handbook, with its file name shown as a source.
 
-The optional `npm run smoke:providers` command uses your configured OpenRouter account for one embedding request and one short answer using synthetic text. It may incur a small provider charge.
+## Connect Telegram
 
-`npm run doctor` checks environment configuration, deployed schema, private storage, and the allowance RPC without printing credentials. `/api/health` checks configuration/liveness; it does not prove external providers are available.
+1. Create a bot with [BotFather](https://t.me/BotFather) and copy its token.
+2. Deploy TeleRAG to a public HTTPS URL and set `TELEGRAM_WEBHOOK_BASE_URL` to that origin.
+3. Paste the token into the Telegram section of your signed-in workspace.
+4. Open the bot, send `/start`, and ask a question about your indexed documents.
 
-## Deploy and connect Telegram
+The workspace generates a copyable welcome paragraph after your documents are ready. The bot sends the same greeting on `/start` without an AI request. Telegram webhooks verify a secret header and protect against duplicate updates after successful delivery.
 
-See [the deployment guide](docs/DEPLOYMENT.md) for the release sequence and live checks. Vercel serves `dist/` and runs the API from `api/[...path].mjs`, with an explicit Telegram webhook function. Uploaded bytes bypass Vercel and go directly to private Supabase Storage.
+## Development and verification
 
-Create a bot with [BotFather](https://t.me/BotFather), set `TELEGRAM_WEBHOOK_BASE_URL` to the deployed public HTTPS origin, and connect its token in the workspace. After indexing your documents, the welcome panel provides a copyable paragraph. The bot sends that greeting on `/start` without an AI call.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Run the local site and Node API. |
+| `npm run check` | Run TypeScript checking, automated tests, and the static build. |
+| `npm test` | Run API, session, Telegram, and database tests. |
+| `npm run doctor` | Check environment configuration, remote schema, private storage, and the allowance RPC. |
+| `npm run build` | Build the static site into `dist/`. |
+| `npm run preview` | Serve the built site with the Node API. |
+| `npm run smoke:providers` | Verify the configured embedding and chat providers using synthetic text. |
 
-## Architecture and scope
+Automated tests mock external APIs and execute the actual SQL migrations against a local PostgreSQL engine with pgvector. They cover tenant isolation, RLS, citations, indexing recovery, session refresh, Telegram handling, rate limits, and cascading deletion. They require no production credentials or paid AI calls. [GitHub Actions](.github/workflows/ci.yml) runs the same checks on pushes and pull requests.
 
-```mermaid
-flowchart LR
-  Owner[Business owner] --> Web[Web workspace]
-  Web --> Auth[Supabase Auth]
-  Web -->|Signed upload| Storage[Private Supabase Storage]
-  Web --> API[Node API]
-  Telegram[Telegram customer] -->|Secret webhook| API
-  API -->|Extract and chunk| Embed[OpenRouter embeddings]
-  Embed --> Vector[Postgres and pgvector]
-  API -->|Tenant-filtered retrieval| Vector
-  API -->|Retrieved excerpts| Chat[OpenRouter chat]
-  Chat --> API
-  API --> Telegram
-  API --> Web
-```
+The optional provider smoke test makes real OpenRouter requests and may incur a small charge. `/api/health` reports configuration/liveness; it does not check provider availability.
 
-Embedding dimension is fixed at 768. The default embedding model is `thenlper/gte-base`; the chat default is `qwen/qwen3.8-27b`, overridable through environment variables. Use the same embedding model for indexing and queries; changing it requires reindexing documents. Pricing and availability depend on OpenRouter and its providers.
+## Built with
 
-Documents are limited to 160 chunks to bound synchronous indexing work. Files with no extractable text fail with a retryable status; scanned PDFs need OCR before upload. Bot-token encryption derives its key from the Supabase service-role key, so rotating that key requires reconnecting bots. Session credentials stay in tab-scoped session storage. Extracted text and questions are sent to OpenRouter for indexing and answers.
+| Layer | Technology |
+| --- | --- |
+| Interface | HTML, CSS, and browser JavaScript |
+| API | Node.js and JavaScript modules |
+| Authentication and storage | Supabase Auth and private Supabase Storage |
+| Retrieval | PostgreSQL, pgvector, and 768-dimensional embeddings |
+| AI providers | OpenRouter embeddings and chat |
+| Customer channel | Telegram Bot API |
+| Verification | Node's test runner, TypeScript, PGlite, and GitHub Actions |
+| Deployment | Vercel static hosting and Node functions |
 
-This release excludes Excel workbook extraction, image OCR, payments, subscriptions, team accounts, a platform administrator panel, and a durable background job queue. The dashboard belongs to the business owner. Usage caps count reserved question attempts, including provider failures; they are safeguards rather than billing. Webhook retries are deduplicated after successful delivery, but an ambiguous delivery failure can still produce a repeated reply.
+## Deployment
 
-See [the project overview](docs/PROJECT_OVERVIEW.md) and [LinkedIn draft](docs/LINKEDIN_POST.md) for sharing the project.
+Vercel serves the built site from `dist/` and runs the API through Node functions. Upload bytes go directly to Supabase Storage, keeping document uploads out of function request bodies.
+
+Follow the [deployment guide](docs/DEPLOYMENT.md) for environment settings, migrations, authentication redirects, Telegram setup, and live verification. Apply database migrations before deploying code that depends on them.
+
+## Scope and limits
+
+- **Workspace:** one business owner per account; the dashboard is scoped to that owner's business.
+- **Documents:** supported text-based formats, up to **10 MiB** and **160 chunks** per file. Scanned PDFs need OCR before upload; image OCR and Excel workbooks are not supported.
+- **Questions:** **5 attempts per chat/minute**, **30 per workspace/minute**, and **1,000 per workspace/UTC month**. Reserved attempts count even when a provider fails; rejected requests do not increase the counter.
+- **Embeddings:** fixed at **768 dimensions**. Changing the embedding model requires reindexing documents, using the same model for queries and indexing.
+- **Credentials and data:** bot tokens are encrypted using a key derived from the service-role key. Reconnect bots after rotating that key. Browser sessions use tab-scoped session storage. OpenRouter processes extracted text and questions.
+- **MVP boundaries:** no payment collection, subscriptions, team accounts, platform-wide administrator console, or durable background queue. Ambiguous Telegram delivery failures can still produce repeated replies.
+
+## Documentation
+
+- [Project overview](docs/PROJECT_OVERVIEW.md) — the problem, implementation, and engineering decisions.
+- [Deployment guide](docs/DEPLOYMENT.md) — configuration, release steps, and troubleshooting.
+- [Verification report](docs/VERIFICATION.md) — completed checks and remaining live release checks.
+- [Sample handbook](examples/studio-handbook.md) — fictional business information for trying the application.
