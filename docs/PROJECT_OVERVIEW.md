@@ -6,6 +6,8 @@ Small businesses repeat answers that already exist in price lists, handbooks, an
 
 A full-stack RAG application with an interactive public demo, authenticated workspace, private uploads, vector retrieval, source-backed answers, and Telegram delivery. Owners manage documents, edit their business name, review conversations, and identify unanswered questions.
 
+The landing page and workspace use React and TypeScript, bundled with Vite. A warm paper palette, editorial typography, and a charcoal dark theme give the interface a consistent identity. The landing page includes reading progress, one-time reveals, subtle paper parallax, and a sticky walkthrough that changes with the current section. Reduced-motion preferences disable decorative movement.
+
 ## How answers work
 
 1. The browser uploads directly to private Supabase Storage using a signed URL.
@@ -27,7 +29,7 @@ A full-stack RAG application with an interactive public demo, authenticated work
 
 ## Stack
 
-JavaScript, TypeScript, Node.js, HTML/CSS, Supabase Auth/Storage, PostgreSQL, pgvector, OpenRouter, Telegram Bot API, Vercel, Node's test runner, PGlite, and GitHub Actions.
+React, TypeScript, Vite, CSS, Node.js, Supabase Auth/Storage, PostgreSQL, pgvector, OpenRouter, Telegram Bot API, Vercel, Vitest, React Testing Library, Node's test runner, PGlite, and GitHub Actions.
 
 ## Demonstration
 

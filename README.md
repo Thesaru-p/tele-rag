@@ -9,6 +9,8 @@
 Turn handbooks, price lists, and policies into source-backed answers in your workspace and on Telegram.
 
 ![Node.js](https://img.shields.io/badge/Node.js-22.13%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-TypeScript-149ECA?style=flat-square&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-Frontend%20build-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20Storage-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Telegram](https://img.shields.io/badge/Telegram-Bot%20API-26A5E4?style=flat-square&logo=telegram&logoColor=white)
@@ -19,9 +21,18 @@ Turn handbooks, price lists, and policies into source-backed answers in your wor
 
 <br />
 
-![TeleRAG interactive demo showing a document-backed answer and its source](docs/screenshots/public-demo.jpg)
+![TeleRAG React landing page in its warm paper theme](docs/screenshots/react-landing-light.jpg)
 
 <p align="center"><sub>The public demo uses fictional sample documents and scripted answers. The authenticated workspace runs the full RAG pipeline.</sub></p>
+
+<details>
+<summary><strong>Explore the dark theme and workspace</strong></summary>
+
+![TeleRAG landing page in charcoal dark mode](docs/screenshots/react-landing-dark.jpg)
+
+![React workspace with fictional sample data](docs/screenshots/react-workspace-light.jpg)
+
+</details>
 
 ## What you can do
 
@@ -35,6 +46,7 @@ TeleRAG brings document management, retrieval-augmented generation, and customer
 | **Document controls** | Track indexing status, inspect errors, retry interrupted jobs, and delete files and their indexed passages. |
 | **An owner dashboard** | Review recent conversations, monthly usage, searchable passage counts, and unanswered questions. |
 | **Account and usage controls** | Email/password sign-in, session renewal, password recovery, tenant isolation, and atomic request limits. |
+| **A considered React interface** | Responsive layouts, saved light/dark themes, scroll progress, gentle reveals, and a scroll-driven RAG walkthrough. Motion respects reduced-motion preferences. |
 
 ## How it works
 
@@ -147,15 +159,20 @@ The workspace generates a copyable welcome paragraph after your documents are re
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Run the local site and Node API. |
-| `npm run check` | Run TypeScript checking, automated tests, and the static build. |
+| `npm run dev` | Run Vite with React hot reload and the Node API on port 3000. |
+| `npm run check` | Check backend/frontend types, run API/database and React tests, and build for production. |
 | `npm test` | Run API, session, Telegram, and database tests. |
+| `npm run test:ui` | Run React interaction, theme, and browser API-client tests with Vitest. |
 | `npm run doctor` | Check environment configuration, remote schema, private storage, and the allowance RPC. |
-| `npm run build` | Build the static site into `dist/`. |
+| `npm run build` | Bundle both React pages and their assets into `dist/` with Vite. |
 | `npm run preview` | Serve the built site with the Node API. |
 | `npm run smoke:providers` | Verify the configured embedding and chat providers using synthetic text. |
 
-Automated tests mock external APIs and execute the actual SQL migrations against a local PostgreSQL engine with pgvector. They cover tenant isolation, RLS, citations, indexing recovery, session refresh, Telegram handling, rate limits, and cascading deletion. They require no production credentials or paid AI calls. [GitHub Actions](.github/workflows/ci.yml) runs the same checks on pushes and pull requests.
+Automated tests mock external APIs and execute the actual SQL migrations against a local PostgreSQL engine with pgvector. They cover tenant isolation, RLS, citations, indexing recovery, session refresh, Telegram handling, rate limits, and cascading deletion. React tests additionally cover demo citations/reset, theme persistence, recovery callbacks, and rejected or stale sessions. They require no production credentials or paid AI calls. [GitHub Actions](.github/workflows/ci.yml) runs the same checks on pushes and pull requests.
+
+The frontend lives in [`website/src/`](website/src/). The public landing page and authenticated workspace are separate, lazily loaded React entries. Vite emits `index.html` and `workspace.html`, preserving the `/` and `/workspace` routes for Vercel clean URLs. Theme initialization runs before React paints. The API and database migrations remain server-side.
+
+For browser checks without production credentials, run `npm run build`, then `node scripts/test-support/browser-server.mjs`. Open [the isolated workspace](http://localhost:3100/workspace) and sign in with `demo@example.invalid` and any password of at least eight characters. This fixture uses in-memory data and mocked providers; it never loads `.env` or contacts production services. It serves the latest build and resets when restarted.
 
 The optional provider smoke test makes real OpenRouter requests and may incur a small charge. `/api/health` reports configuration/liveness; it does not check provider availability.
 
@@ -163,13 +180,13 @@ The optional provider smoke test makes real OpenRouter requests and may incur a 
 
 | Layer | Technology |
 | --- | --- |
-| Interface | HTML, CSS, and browser JavaScript |
+| Interface | React, TypeScript, CSS, and Vite |
 | API | Node.js and JavaScript modules |
 | Authentication and storage | Supabase Auth and private Supabase Storage |
 | Retrieval | PostgreSQL, pgvector, and 768-dimensional embeddings |
 | AI providers | OpenRouter embeddings and chat |
 | Customer channel | Telegram Bot API |
-| Verification | Node's test runner, TypeScript, PGlite, and GitHub Actions |
+| Verification | Vitest, React Testing Library, Node's test runner, TypeScript, PGlite, and GitHub Actions |
 | Deployment | Vercel static hosting and Node functions |
 
 ## Deployment
