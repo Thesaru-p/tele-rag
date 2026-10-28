@@ -37,6 +37,7 @@
 
 ## Troubleshooting
 
+- PDF indexing reports `DOMMatrix is not defined`: deploy the PDF bootstrap fix, which imports `pdf-parse/worker` before `pdf-parse`, supplies `CanvasFactory`, and configures the embedded worker. Keep native canvas dependencies in the function bundle. After deployment, use Retry on the failed document; the original upload is retained.
 - Upload/index/retry/delete returns a plain-text Vercel `NOT_FOUND`: verify the explicit nested entrypoints under `api/documents/` and `api/unanswered/` are included in the deployment. The root API handler alone did not match these nested URLs in the deployed project. An unauthenticated request to each API route should return JSON with status 401, not a platform 404.
 - Dashboard, uploads, or chat fail after updating: apply the release migration before deploying this code. Run `npm run doctor` to identify missing schema.
 - A document stays processing: refresh after five minutes. Interrupted indexing becomes failed and exposes Retry indexing. Split files over 160 chunks.

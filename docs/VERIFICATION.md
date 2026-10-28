@@ -1,5 +1,11 @@
 # Verification — 27 October 2026
 
+## PDF runtime fix — 28 October 2026
+
+- Reproduced `DOMMatrix is not defined` in a fresh Node process by simulating PDF.js's dynamic canvas require being unavailable. The regression uses a real selectable-text PDF and no external services.
+- Load `pdf-parse/worker` before the parser, supply its `CanvasFactory`, and configure its embedded worker. This follows the package's [serverless troubleshooting guidance](https://github.com/mehmet-kozan/pdf-parse/blob/main/docs/troubleshooting.md).
+- The regression now extracts the expected PDF text. Deployment and retry of the affected production document remain pending; no production upload was modified during verification.
+
 ## Deployment routing fix — 28 October 2026
 
 - Production diagnostics confirmed that `/api/documents/upload-url`, `/api/documents/finalize-upload`, and `/api/documents/:id/reindex` returned Vercel plain-text 404s. `/api/chat` returned the expected JSON 401 without credentials. The upload requests never reached the function.
