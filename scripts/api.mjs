@@ -104,8 +104,12 @@ async function getBusiness(user, requestedName = 'My business') {
 
 export async function extractText(file, extension) {
   if (extension === 'pdf') {
+    // Bootstrap Node graphics globals before PDF.js evaluates its module.
+    // This explicit import also makes the canvas dependency visible to function tracing.
+    const { CanvasFactory, getData } = await import('pdf-parse/worker');
     const { PDFParse } = await import('pdf-parse');
-    const parser = new PDFParse({ data: file.buffer });
+    PDFParse.setWorker(getData());
+    const parser = new PDFParse({ data: file.buffer, CanvasFactory });
     try { return (await parser.getText()).text; }
     finally { await parser.destroy(); }
   }
