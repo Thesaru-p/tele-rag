@@ -1,5 +1,12 @@
 # Verification — 27 October 2026
 
+## Deployment routing fix — 28 October 2026
+
+- Production diagnostics confirmed that `/api/documents/upload-url`, `/api/documents/finalize-upload`, and `/api/documents/:id/reindex` returned Vercel plain-text 404s. `/api/chat` returned the expected JSON 401 without credentials. The upload requests never reached the function.
+- Added explicit Vercel entrypoints for upload preparation, finalization, document deletion, reindexing, and unanswered-question review. Each delegates to the existing authenticated API.
+- Local checks now cover 41 tests, including a regression check that all five nested entrypoints return authenticated API JSON. Live upload/retry verification remains pending deployment of this fix.
+- `npm run check` passed. Vercel's separate local packaging command could not complete on this Windows host (`spawn cmd.exe ENOENT`); the cloud build and generated deployment routes still need verification before the fix is considered released.
+
 ## Passed locally
 
 - `npm run check`: backend/frontend TypeScript checking, **40 tests** (30 API/database/session/Telegram and 10 React/client tests), and the Vite production build.
