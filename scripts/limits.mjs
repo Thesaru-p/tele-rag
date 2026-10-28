@@ -7,7 +7,7 @@ export const limits = Object.freeze({
   questionCharacters: 1000,
 });
 
-export const fallbackAnswer = 'I could not find an answer in the uploaded documents. Please contact the business directly.';
+export const fallbackAnswer = 'I don’t have confirmed information about that yet. Please check with the business directly so the team can help.';
 
 export function validateQuestion(value) {
   if (typeof value !== 'string' || !value.trim()) throw Object.assign(new Error('Enter a question first.'), { status: 400 });

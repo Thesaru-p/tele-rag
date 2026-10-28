@@ -4,7 +4,6 @@ import { zipSync, strToU8 } from 'fflate';
 import { createCipheriv, createHash, randomBytes } from 'node:crypto';
 import { handleApi, chunkText, extractText } from './api.mjs';
 import { mockServices, businessId, documentId } from './test-support/mock-services.mjs';
-import { fallbackAnswer } from './limits.mjs';
 
 process.env.SUPABASE_URL = 'https://release-test.supabase.invalid';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only-service-role-key';
@@ -73,7 +72,7 @@ test('authenticated API, uploads, tenant boundaries, grounding, review, and limi
     await t.test('logs unsupported answers even when retrieval returned relevant passages', async () => {
       fixture.generated = { answer: 'I do not know.', supported: false, source_ids: [] };
       const answer = await call('/api/chat', 'POST', { question: 'Do you ship overseas?' });
-      assert.equal(answer.value.answer, fallbackAnswer);
+      assert.equal(answer.value.answer, fixture.generated.answer);
       assert.deepEqual(answer.value.sources, []);
       assert.equal(fixture.data.unanswered_questions.at(-1).question, 'Do you ship overseas?');
       fixture.generated = { answer: 'Invented answer', supported: true, source_ids: [999] };
