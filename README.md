@@ -42,6 +42,7 @@ TeleRAG brings document management, retrieval-augmented generation, and customer
 | --- | --- |
 | **A private knowledge base** | Upload PDF, DOCX, CSV, TXT, and Markdown directly to private Supabase Storage. |
 | **Answers with sources** | Retrieve relevant document passages, generate an answer, and see the supporting file names. |
+| **Natural customer replies** | Generate replies from your retrieved document content, adapting to the business and question without industry-specific reply templates. Missing information is acknowledged naturally and saved for review. |
 | **A connected Telegram bot** | Connect a BotFather token, generate a welcome message, and answer customer questions from the same documents. |
 | **Document controls** | Track indexing status, inspect errors, retry interrupted jobs, and delete files and their indexed passages. |
 | **An owner dashboard** | Review recent conversations, monthly usage, searchable passage counts, and unanswered questions. |
@@ -197,6 +198,7 @@ Follow the [deployment guide](docs/DEPLOYMENT.md) for environment settings, migr
 
 ## Scope and limits
 
+- **Customer actions:** the assistant explains procedures described in your documents but does not submit orders, reserve appointments, check live stock, take payments, or notify staff. Conversation follow-ups should include the item or service being discussed; replies currently use the current question rather than conversation history. A generic unavailable-information reply is used when there are no ready documents or generated citations are invalid.
 - **Workspace:** one business owner per account; the dashboard is scoped to that owner's business.
 - **Documents:** supported text-based formats, up to **10 MiB** and **160 chunks** per file. Scanned PDFs need OCR before upload; image OCR and Excel workbooks are not supported.
 - **Questions:** **5 attempts per chat/minute**, **30 per workspace/minute**, and **1,000 per workspace/UTC month**. Reserved attempts count even when a provider fails; rejected requests do not increase the counter.

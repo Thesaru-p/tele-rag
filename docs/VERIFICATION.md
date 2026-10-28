@@ -1,5 +1,12 @@
 # Verification — 27 October 2026
 
+## Customer-service replies — 28 October 2026
+
+- Updated the generation instructions to answer the informational intent of customer action requests, use documented menu/product details, distinguish menu listings from live availability, and explain actual ordering methods without claiming to submit an order.
+- Replies, including acknowledgments of missing information, are generated dynamically from the question and retrieved evidence. No keyword-based customer reply templates or embedded example menu are used. Unsupported replies retain empty citations and enter the knowledge-gap review list. No-ready-document requests still avoid provider calls.
+- Regression cases cover different document domains, dynamically generated missing-information replies, invalid citations, missing documents, and retrieval without a relevant passage.
+- Live evaluation used the identical question with two fictional documents: the workshop answer used its email/deadline instructions, while the studio answer used its walk-in day/hours. Both returned the correct source. Only synthetic text was sent to the configured model.
+
 ## PDF runtime fix — 28 October 2026
 
 - Reproduced `DOMMatrix is not defined` in a fresh Node process by simulating PDF.js's dynamic canvas require being unavailable. The regression uses a real selectable-text PDF and no external services.
